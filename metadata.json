@@ -1,0 +1,6 @@
+{
+  "name": "MovieBox Premium",
+  "description": "Discover, track, and stream movies and TV shows in a premium cinematic experience with TMDB API integration, VIDAPI video player, and Gemini AI assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
