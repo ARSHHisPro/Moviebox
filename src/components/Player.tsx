@@ -219,38 +219,12 @@ export const Player: React.FC<PlayerProps> = ({
     }
   };
 
-  // Keyboard controls
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!currentUser) return;
-      if (e.key === ' ' || e.key === 'k') {
-        e.preventDefault();
-        setIsPlaying((prev) => !prev);
-      } else if (e.key === 'f') {
-        toggleFullscreen();
-      } else if (e.key === 'm') {
-        setIsMuted((prev) => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentUser]);
-
   const handleMouseMove = () => {
     setShowControls(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     controlsTimeoutRef.current = setTimeout(() => {
       setShowControls(false);
     }, 3500);
-  };
-
-  const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch((e) => console.error(e));
-    } else {
-      document.exitFullscreen();
-    }
   };
 
   const handleShare = () => {
@@ -496,6 +470,18 @@ export const Player: React.FC<PlayerProps> = ({
             <span className="hidden sm:inline">Direct Tab</span>
           </button>
 
+          {/* Next Episode Button for TV */}
+          {type === 'tv' && (
+            <button
+              onClick={handleNextEpisode}
+              className="p-2 rounded-full bg-[#00d2ff]/20 hover:bg-[#00d2ff]/30 text-[#00d2ff] border border-[#00d2ff]/40 backdrop-blur-md transition-all flex items-center gap-1.5 px-3 text-xs font-bold cursor-pointer"
+              title="Next Episode"
+            >
+              <SkipForward className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Next Episode</span>
+            </button>
+          )}
+
           {/* Episode Drawer Trigger */}
           {type === 'tv' && (
             <button
@@ -598,52 +584,6 @@ export const Player: React.FC<PlayerProps> = ({
           </div>
         </div>
       )}
-
-      {/* Bottom Controls Bar */}
-      <div
-        className={`absolute bottom-0 left-0 right-0 z-30 p-4 bg-gradient-to-t from-black/95 via-black/50 to-transparent flex items-center justify-between transition-opacity duration-300 ${
-          showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="p-2 rounded-full bg-[#00d2ff] text-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#00d2ff]/30 cursor-pointer"
-          >
-            {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-          </button>
-
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer"
-          >
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </button>
-
-          {type === 'tv' && (
-            <button
-              onClick={handleNextEpisode}
-              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <SkipForward className="w-3.5 h-3.5 text-[#00d2ff]" />
-              Next Episode
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] text-white/50 font-semibold uppercase tracking-wider hidden sm:inline">
-            4K Ultra HD • Switch server if iframe is blocked
-          </span>
-          <button
-            onClick={toggleFullscreen}
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer"
-            title="Fullscreen (F)"
-          >
-            <Maximize className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

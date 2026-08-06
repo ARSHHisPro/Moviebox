@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Crown, Instagram, Sparkles, Lock } from 'lucide-react';
+import { Film, Crown, Instagram, Sparkles, Lock, User } from 'lucide-react';
 import { OwnerLockManagerModal } from './OwnerLockManagerModal';
 
 interface FooterProps {
@@ -127,6 +127,11 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">Your Library</h4>
               <ul className="space-y-2 text-xs text-slate-400">
                 <li>
+                  <button onClick={() => onNavigate('profile')} className="hover:text-[#00d2ff] transition-colors flex items-center gap-1.5 font-bold text-white/90">
+                    <User className="w-3.5 h-3.5 text-[#00d2ff]" /> User Profile & Settings
+                  </button>
+                </li>
+                <li>
                   <button onClick={() => onNavigate('favorites')} className="hover:text-[#00d2ff] transition-colors">
                     Favorites & Watchlist
                   </button>
@@ -160,7 +165,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           {/* Bottom Bar */}
           <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <div>© {new Date().getFullYear()} MovieBox. Personal Streaming Project by Arshh.</div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <button
+                onClick={() => onNavigate('profile')}
+                className="px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider text-[#00d2ff] bg-[#00d2ff]/10 hover:bg-[#00d2ff]/20 border border-[#00d2ff]/50 shadow-[0_0_15px_rgba(0,210,255,0.4)] hover:shadow-[0_0_25px_rgba(0,210,255,0.8)] animate-pulse hover:animate-none transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <User className="w-3.5 h-3.5 text-[#00d2ff]" />
+                <span>My Profile</span>
+              </button>
               <a href="https://www.instagram.com/arshhispro_/" target="_blank" rel="noopener noreferrer" className="hover:text-[#00d2ff] flex items-center gap-1">
                 <Instagram className="w-3.5 h-3.5 text-pink-400" /> Instagram
               </a>
