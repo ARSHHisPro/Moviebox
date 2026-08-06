@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { auth, signOut } from '../services/auth';
 import { UserProfile } from '../types';
 import { favoritesStore, watchHistoryStore, continueWatchingStore } from '../services/store';
@@ -12,17 +12,41 @@ interface ProfilePageProps {
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
-  const user: UserProfile | null = auth.getCurrentUser();
+  const [user, setUser] = useState<UserProfile | null>(auth.getCurrentUser());
   const [favoriteCount] = useState(favoritesStore.getItems().length);
   const [historyCount] = useState(watchHistoryStore.getItems().length);
   const [continueCount] = useState(continueWatchingStore.getItems().length);
   const [showLockModal, setShowLockModal] = useState(false);
+
+  useEffect(() => {
+    return auth.subscribe((u) => setUser(u));
+  }, []);
 
   const handleSignOut = () => {
     signOut();
     toast.info('Signed out of MovieBox Premium');
     onNavigate('home');
   };
+
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-6">
+        <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-slate-400">
+          <User className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-black text-white">Signed Out</h2>
+          <p className="text-xs text-slate-400">You are currently in guest mode. Sign in to access your personal sync and VIP features.</p>
+        </div>
+        <button
+          onClick={() => onNavigate('auth')}
+          className="w-full py-3 rounded-2xl bg-gradient-to-r from-[var(--color-secondary)] to-[var(--color-primary)] text-white font-extrabold text-xs shadow-xl hover:brightness-110"
+        >
+          Sign In or Create Account
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

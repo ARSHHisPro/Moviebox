@@ -6,15 +6,25 @@ import { Carousel } from '../components/Carousel';
 import { MovieCard } from '../components/MovieCard';
 import { OwnerNoticeBanner } from '../components/OwnerNoticeBanner';
 import { continueWatchingStore } from '../services/store';
-import { Flame, PlayCircle, Film, Tv, Star, Sparkles, ChevronRight } from 'lucide-react';
+import { Flame, PlayCircle, Film, Tv, Star, Sparkles, ChevronRight, Users, Shuffle, Trophy, Headphones } from 'lucide-react';
 
 interface HomePageProps {
   onNavigate: (route: string) => void;
   onOpenTrailer: (item: MediaItem) => void;
   onOpenAiConcierge: () => void;
+  onOpenWatchParty?: () => void;
+  onOpenTrivia?: () => void;
+  onOpenRoulette?: () => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenTrailer, onOpenAiConcierge }) => {
+export const HomePage: React.FC<HomePageProps> = ({
+  onNavigate,
+  onOpenTrailer,
+  onOpenAiConcierge,
+  onOpenWatchParty,
+  onOpenTrivia,
+  onOpenRoulette
+}) => {
   const [heroItems, setHeroItems] = useState<MediaItem[]>([]);
   const [trendingMovies, setTrendingMovies] = useState<MediaItem[]>([]);
   const [popularTv, setPopularTv] = useState<MediaItem[]>([]);
@@ -75,11 +85,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenTrailer, o
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 space-y-6">
       
-      {/* Notice Banner */}
-      <OwnerNoticeBanner />
-
       {/* Featured Hero Banner */}
       <HeroBanner
         items={heroItems}
@@ -105,11 +112,91 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenTrailer, o
 
         <button
           onClick={onOpenAiConcierge}
-          className="px-6 py-3 rounded-full bg-gradient-to-r from-[var(--color-secondary)] to-[var(--color-primary)] text-white font-bold text-xs hover:brightness-110 shadow-lg shadow-[var(--color-primary-glow)] transition-all flex items-center gap-2 flex-shrink-0"
+          className="px-6 py-3 rounded-full bg-gradient-to-r from-[var(--color-secondary)] to-[var(--color-primary)] text-white font-bold text-xs hover:brightness-110 shadow-lg shadow-[var(--color-primary-glow)] transition-all flex items-center gap-2 flex-shrink-0 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
           Ask MovieBox AI
         </button>
+      </div>
+
+      {/* Cinephile Studio Interactive Hub */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#00d2ff]" />
+            <h2 className="text-sm font-extrabold uppercase tracking-widest text-white/90">
+              Cinephile Lounge & Interactive Features
+            </h2>
+          </div>
+          <span className="text-[10px] font-bold text-[#00d2ff] bg-[#00d2ff]/10 px-2 py-0.5 rounded-md border border-[#00d2ff]/20">
+            4 Live Modules Active
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Host Watch Party Card */}
+          <div
+            onClick={onOpenWatchParty}
+            className="glass-panel p-5 rounded-2xl border border-cyan-500/30 hover:border-cyan-500/60 bg-gradient-to-br from-cyan-950/30 via-black/40 to-cyan-900/10 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                <Users className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] uppercase font-black text-cyan-400 tracking-wider">Multi-User Sync</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-white group-hover:text-cyan-300 transition-colors">
+                Host a Watch Party
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                Create synchronized streaming rooms with live room chat, timestamp sync, and custom invite codes.
+              </p>
+            </div>
+          </div>
+
+          {/* Surprise Movie Roulette Card */}
+          <div
+            onClick={onOpenRoulette}
+            className="glass-panel p-5 rounded-2xl border border-amber-500/30 hover:border-amber-500/60 bg-gradient-to-br from-amber-950/30 via-black/40 to-amber-900/10 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                <Shuffle className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] uppercase font-black text-amber-400 tracking-wider">3D Wheel Spinner</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-white group-hover:text-amber-300 transition-colors">
+                Surprise Movie Roulette
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                Indecisive? Spin the animated 3D roulette wheel filtered by genre and rating for instant surprise picks.
+              </p>
+            </div>
+          </div>
+
+          {/* Movie Trivia Quiz Card */}
+          <div
+            onClick={onOpenTrivia}
+            className="glass-panel p-5 rounded-2xl border border-emerald-500/30 hover:border-emerald-500/60 bg-gradient-to-br from-emerald-950/30 via-black/40 to-emerald-900/10 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] uppercase font-black text-emerald-400 tracking-wider">Firestore Leaderboard</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-white group-hover:text-emerald-300 transition-colors">
+                Cinema Trivia Challenge
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                Test your movie knowledge with timed questions and climb the live global Firestore trivia leaderboard.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Continue Watching Carousel */}

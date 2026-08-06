@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Film, Tv, Heart, History, Flame, Sparkles, User, Settings, Menu, X, PlayCircle, Layers, SlidersHorizontal, LogIn } from 'lucide-react';
+import { Search, Film, Tv, Heart, History, Flame, Sparkles, User, Settings, Menu, X, PlayCircle, Layers, SlidersHorizontal, LogIn, Users, Shuffle, Trophy } from 'lucide-react';
 import { auth } from '../services/auth';
 import { UserProfile } from '../types';
 import { tmdb } from '../services/tmdb';
@@ -10,9 +10,19 @@ interface NavbarProps {
   currentRoute: string;
   onNavigate: (route: string) => void;
   onOpenAiConcierge: () => void;
+  onOpenWatchParty?: () => void;
+  onOpenTrivia?: () => void;
+  onOpenRoulette?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentRoute, onNavigate, onOpenAiConcierge }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  currentRoute,
+  onNavigate,
+  onOpenAiConcierge,
+  onOpenWatchParty,
+  onOpenTrivia,
+  onOpenRoulette
+}) => {
   const [user, setUser] = useState<UserProfile | null>(auth.getCurrentUser());
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<MediaItem[]>([]);
@@ -177,6 +187,42 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRoute, onNavigate, onOpen
             )}
           </div>
 
+          {/* Quick Interactive Cinephile Features Bar */}
+          <div className="hidden lg:flex items-center gap-1.5 border-l border-white/10 pl-3">
+            {onOpenWatchParty && (
+              <button
+                onClick={onOpenWatchParty}
+                title="Host Watch Party"
+                className="px-2.5 py-1.5 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Party</span>
+              </button>
+            )}
+
+            {onOpenRoulette && (
+              <button
+                onClick={onOpenRoulette}
+                title="Surprise Movie Roulette"
+                className="px-2.5 py-1.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Shuffle className="w-3.5 h-3.5" />
+                <span>Spin</span>
+              </button>
+            )}
+
+            {onOpenTrivia && (
+              <button
+                onClick={onOpenTrivia}
+                title="Movie Trivia Quiz"
+                className="px-2.5 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trophy className="w-3.5 h-3.5" />
+                <span>Trivia</span>
+              </button>
+            )}
+          </div>
+
           {/* AI Movie Assistant Button */}
           <button
             onClick={onOpenAiConcierge}
@@ -191,10 +237,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRoute, onNavigate, onOpen
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onNavigate('profile')}
-                className="flex items-center gap-2.5 p-1 pl-1.5 pr-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer"
+                className="flex items-center gap-2 p-1 pl-1.5 pr-3.5 rounded-full bg-gradient-to-r from-white/10 to-white/5 hover:from-[#00d2ff]/20 hover:to-purple-600/20 border border-white/15 hover:border-[#00d2ff]/50 transition-all cursor-pointer shadow-md hover:shadow-[#00d2ff]/20 group"
               >
                 <UserAvatar username={user.username} avatarUrl={user.avatar} size="sm" />
-                <span className="text-xs font-bold text-slate-200 hidden sm:inline">{user.username}</span>
+                <span className="text-xs font-extrabold text-white group-hover:text-[#00d2ff] transition-colors">{user.username}</span>
               </button>
 
               <button
@@ -248,6 +294,46 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRoute, onNavigate, onOpen
               </button>
             );
           })}
+          {/* Mobile Interactive Tools Grid */}
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 my-1">
+            {onOpenWatchParty && (
+              <button
+                onClick={() => {
+                  onOpenWatchParty();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="p-2 rounded-xl bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 text-xs font-semibold flex flex-col items-center justify-center gap-1"
+              >
+                <Users className="w-4 h-4" />
+                <span>Watch Party</span>
+              </button>
+            )}
+            {onOpenRoulette && (
+              <button
+                onClick={() => {
+                  onOpenRoulette();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="p-2 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-semibold flex flex-col items-center justify-center gap-1"
+              >
+                <Shuffle className="w-4 h-4" />
+                <span>Roulette</span>
+              </button>
+            )}
+            {onOpenTrivia && (
+              <button
+                onClick={() => {
+                  onOpenTrivia();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="p-2 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex flex-col items-center justify-center gap-1"
+              >
+                <Trophy className="w-4 h-4" />
+                <span>Trivia Quiz</span>
+              </button>
+            )}
+          </div>
+
           <div className="pt-2 border-t border-white/10 flex items-center justify-between">
             <button
               onClick={() => {

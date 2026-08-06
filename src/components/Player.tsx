@@ -62,6 +62,18 @@ const SERVERS = [
     name: 'Server 7 (2Embed)', 
     movieUrl: (id: number) => `https://www.2embed.cc/embed/${id}`,
     tvUrl: (id: number, s: number, e: number) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`
+  },
+  { 
+    id: 'vidsrc_pro', 
+    name: 'Server 8 (VidSrc.pro)', 
+    movieUrl: (id: number) => `https://vidsrc.pro/embed/movie/${id}`,
+    tvUrl: (id: number, s: number, e: number) => `https://vidsrc.pro/embed/tv/${id}/${s}/${e}`
+  },
+  { 
+    id: 'smashystream', 
+    name: 'Server 9 (SmashyStream)', 
+    movieUrl: (id: number) => `https://embed.smashystream.com/playere.php?tmdb=${id}`,
+    tvUrl: (id: number, s: number, e: number) => `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`
   }
 ];
 
@@ -505,7 +517,7 @@ export const Player: React.FC<PlayerProps> = ({
         </div>
       </div>
 
-      {/* Main Video Iframe with full sandbox permissions & allow attributes */}
+      {/* Main Video Iframe */}
       <div className="relative flex-1 w-full h-full bg-slate-950">
         <iframe
           key={`${selectedServer}-${media.id}-${type}-${season}-${episode}`}
@@ -513,7 +525,7 @@ export const Player: React.FC<PlayerProps> = ({
           className="w-full h-full border-0"
           allowFullScreen
           allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals"
+          referrerPolicy="origin"
           title={`Streaming ${title}`}
         />
       </div>

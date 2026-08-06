@@ -4,9 +4,14 @@ import { MediaDetails, MediaItem, MediaType } from '../types';
 import { Player } from '../components/Player';
 import { Carousel } from '../components/Carousel';
 import { MovieCard } from '../components/MovieCard';
-import { Star, Calendar, Clock, Film, Sparkles, Heart } from 'lucide-react';
+import { Star, Calendar, Clock, Film, Sparkles, Heart, Users, Ticket, FolderPlus, MessageSquare } from 'lucide-react';
 import { favoritesStore } from '../services/store';
 import { toast } from '../services/toast';
+
+import { WatchPartyModal } from '../components/WatchPartyModal';
+import { VipTicketModal } from '../components/VipTicketModal';
+import { CustomPlaylistModal } from '../components/CustomPlaylistModal';
+import { CommunityReviewsModal } from '../components/CommunityReviewsModal';
 
 interface WatchPageProps {
   route: string;
@@ -24,12 +29,21 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
   const [details, setDetails] = useState<MediaDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Modals state
+  const [watchPartyOpen, setWatchPartyOpen] = useState(false);
+  const [vipTicketOpen, setVipTicketOpen] = useState(false);
+  const [playlistOpen, setPlaylistOpen] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+
+  const [isFav, setIsFav] = useState(false);
+
   useEffect(() => {
     async function loadWatchDetails() {
       setLoading(true);
       try {
         const res = await tmdb.getMediaDetails(type, id);
         setDetails(res);
+        setIsFav(favoritesStore.isFavorite(res.id, type));
       } catch (err) {
         console.error('Failed to load media details', err);
       } finally {
@@ -38,6 +52,11 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
     }
     loadWatchDetails();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const unsub = favoritesStore.subscribe(() => {
+      setIsFav(favoritesStore.isFavorite(id, type));
+    });
+    return () => unsub();
   }, [type, id]);
 
   if (loading || !details) {
@@ -56,10 +75,9 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
   const rating = details.vote_average ? Math.round(details.vote_average * 10) / 10 : null;
   const runtimeStr = details.runtime ? `${Math.floor(details.runtime / 60)}h ${details.runtime % 60}m` : null;
 
-  const isFav = favoritesStore.isFavorite(details.id, type);
-
   const handleToggleFav = () => {
     const added = favoritesStore.toggleFavorite(details);
+    setIsFav(added);
     if (added) toast.success(`Added "${title}" to Favorites`);
     else toast.info(`Removed "${title}" from Favorites`);
   };
@@ -134,8 +152,8 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Action Buttons Toolbar */}
+          <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0 pt-2">
             <button
               onClick={handleToggleFav}
               className={`px-4 py-2.5 rounded-full text-xs font-bold border transition-all flex items-center gap-2 ${
@@ -146,6 +164,34 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
             >
               <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
               {isFav ? 'Favorited' : 'Add Favorite'}
+            </button>
+
+            <button
+              onClick={() => setWatchPartyOpen(true)}
+              className="px-4 py-2.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/10"
+            >
+              <Users className="w-4 h-4" /> Host Watch Party
+            </button>
+
+            <button
+              onClick={() => setVipTicketOpen(true)}
+              className="px-4 py-2.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-amber-500/10"
+            >
+              <Ticket className="w-4 h-4" /> VIP Pass
+            </button>
+
+            <button
+              onClick={() => setPlaylistOpen(true)}
+              className="px-4 py-2.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 hover:bg-purple-500/30 text-xs font-bold transition-all flex items-center gap-2"
+            >
+              <FolderPlus className="w-4 h-4" /> Custom Playlist
+            </button>
+
+            <button
+              onClick={() => setReviewsOpen(true)}
+              className="px-4 py-2.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 text-xs font-bold transition-all flex items-center gap-2"
+            >
+              <MessageSquare className="w-4 h-4" /> Reviews
             </button>
 
             {details.videos?.results?.[0] && (
@@ -198,6 +244,54 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
           ))}
         </Carousel>
       )}
+
+      {/* Cinephile Modals */}
+      <WatchPartyModal
+        isOpen={watchPartyOpen}
+        onClose={() => setWatchPartyOpen(false)}
+        mediaItem={{
+          id: details.id,
+          title,
+          type,
+          poster: details.poster_path ? `https://image.tmdb.org/t/p/w342${details.poster_path}` : null,
+          year
+        }}
+        onNavigateToWatch={(mId, mType, roomId) => {
+          setWatchPartyOpen(false);
+          onNavigate(`watch?type=${mType}&id=${mId}${roomId ? `&room=${roomId}` : ''}`);
+        }}
+      />
+
+      <VipTicketModal
+        isOpen={vipTicketOpen}
+        onClose={() => setVipTicketOpen(false)}
+        mediaItem={{
+          id: details.id,
+          title,
+          type,
+          poster: details.poster_path ? `https://image.tmdb.org/t/p/w342${details.poster_path}` : null,
+          year
+        }}
+      />
+
+      <CustomPlaylistModal
+        isOpen={playlistOpen}
+        onClose={() => setPlaylistOpen(false)}
+        mediaItem={{
+          id: details.id,
+          title,
+          type,
+          poster: details.poster_path ? `https://image.tmdb.org/t/p/w342${details.poster_path}` : null,
+          year
+        }}
+      />
+
+      <CommunityReviewsModal
+        isOpen={reviewsOpen}
+        onClose={() => setReviewsOpen(false)}
+        mediaId={details.id}
+        mediaTitle={title}
+      />
     </div>
   );
 };

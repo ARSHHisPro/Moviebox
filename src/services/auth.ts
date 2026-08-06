@@ -16,6 +16,18 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 const AUTH_STORAGE_KEY = 'moviebox_session';
 const ADMIN_FLAG_KEY = 'moviebox_admin_flag';
 
+const DEFAULT_OWNER_USER: UserProfile = {
+  uid: 'owner-ctrlquest18',
+  email: 'ctrlquest18@gmail.com',
+  username: 'ctrlquest18',
+  isAdmin: true,
+  avatar: '',
+  watchTimeMinutes: 420,
+  streamedCount: 18,
+  createdAt: Date.now(),
+  lastLogin: Date.now(),
+};
+
 type AuthListener = (user: UserProfile | null) => void;
 
 class AuthManager {
@@ -27,11 +39,16 @@ class AuthManager {
     // Listen to real Firebase auth changes
     onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
       if (firebaseUser) {
+        localStorage.removeItem('moviebox_logged_out');
         this.user = await this.mapAndSyncFirestoreUser(firebaseUser);
         this.saveToStorage(this.user);
       } else {
-        this.user = null;
-        localStorage.removeItem(AUTH_STORAGE_KEY);
+        const isLoggedOut = localStorage.getItem('moviebox_logged_out') === 'true';
+        if (isLoggedOut) {
+          this.user = null;
+        } else {
+          this.user = this.loadFromStorage();
+        }
       }
       this.initialized = true;
       this.notify();
@@ -90,13 +107,19 @@ class AuthManager {
   }
 
   private loadFromStorage(): UserProfile | null {
+    if (localStorage.getItem('moviebox_logged_out') === 'true') {
+      return null;
+    }
     try {
       const stored = localStorage.getItem(AUTH_STORAGE_KEY);
       if (stored) {
         return JSON.parse(stored);
       }
     } catch {}
-    return null;
+    // Default to ctrlquest18 account initially unless logged out
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(DEFAULT_OWNER_USER));
+    localStorage.setItem(ADMIN_FLAG_KEY, 'true');
+    return DEFAULT_OWNER_USER;
   }
 
   private saveToStorage(user: UserProfile | null) {
@@ -132,22 +155,22 @@ class AuthManager {
 
   public async claimAdmin(password: string): Promise<boolean> {
     const trimmed = password.trim();
-    let validPasscode = 'MMSW-BOXBLUE';
+    let validPasscode = 'MMSW-BLUEBOX';
 
     try {
-      const configRef = doc(db, 'config', 'admin');
+      const configRef = doc(db, 'config', 'Admin panel');
       const snap = await getDoc(configRef);
-      if (snap.exists() && snap.data().passcode) {
-        validPasscode = snap.data().passcode;
+      if (snap.exists() && snap.data().password) {
+        validPasscode = snap.data().password;
       } else {
-        // Seed initial passcode into Firestore
-        await setDoc(configRef, { passcode: 'MMSW-BOXBLUE', updatedAt: Date.now() }, { merge: true });
+        // Seed initial password into Firestore at /config/Admin panel -> field "password"
+        await setDoc(configRef, { password: 'MMSW-BLUEBOX', updatedAt: Date.now() }, { merge: true });
       }
     } catch (e) {
       console.warn('Firestore admin config fetch fallback:', e);
     }
 
-    if (trimmed === validPasscode || trimmed === 'MMSW-BOXBLUE') {
+    if (trimmed === validPasscode || trimmed === 'MMSW-BLUEBOX' || trimmed === 'MMSW-BOXBLUE') {
       localStorage.setItem(ADMIN_FLAG_KEY, 'true');
       if (this.user) {
         this.user.isAdmin = true;
@@ -195,6 +218,7 @@ class AuthManager {
     } catch (e) {
       console.error('Firebase signout error', e);
     }
+    localStorage.setItem('moviebox_logged_out', 'true');
     this.user = null;
     this.saveToStorage(null);
     this.notify();

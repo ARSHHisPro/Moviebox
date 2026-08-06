@@ -4,6 +4,7 @@ import { Footer } from './components/Footer';
 import { ToastContainer } from './components/ToastContainer';
 import { TrailerModal } from './components/TrailerModal';
 import { GeminiConciergeModal } from './components/GeminiConciergeModal';
+import { OwnerNoticeBanner } from './components/OwnerNoticeBanner';
 
 // Pages
 import { HomePage } from './pages/HomePage';
@@ -22,7 +23,13 @@ import { PersonPage } from './pages/PersonPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuthPage } from './pages/AuthPage';
+import { AdminPage } from './pages/AdminPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+
+import { AmbientPlayer } from './components/AmbientPlayer';
+import { WatchPartyModal } from './components/WatchPartyModal';
+import { TriviaGameModal } from './components/TriviaGameModal';
+import { SurpriseWheelModal } from './components/SurpriseWheelModal';
 
 import { MediaItem } from './types';
 import { tmdb } from './services/tmdb';
@@ -34,6 +41,11 @@ export function App() {
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [trailerTitle, setTrailerTitle] = useState('');
   const [aiConciergeOpen, setAiConciergeOpen] = useState(false);
+
+  // Cinephile Tool Modals State
+  const [watchPartyOpen, setWatchPartyOpen] = useState(false);
+  const [triviaOpen, setTriviaOpen] = useState(false);
+  const [rouletteOpen, setRouletteOpen] = useState(false);
 
   // Initialize active theme
   useEffect(() => {
@@ -70,6 +82,9 @@ export function App() {
             onNavigate={handleNavigate}
             onOpenTrailer={handleOpenTrailer}
             onOpenAiConcierge={() => setAiConciergeOpen(true)}
+            onOpenWatchParty={() => setWatchPartyOpen(true)}
+            onOpenTrivia={() => setTriviaOpen(true)}
+            onOpenRoulette={() => setRouletteOpen(true)}
           />
         );
       case 'movies':
@@ -110,6 +125,8 @@ export function App() {
         return <SettingsPage onNavigate={handleNavigate} />;
       case 'auth':
         return <AuthPage onNavigate={handleNavigate} />;
+      case 'admin':
+        return <AdminPage onNavigate={handleNavigate} />;
       default:
         return <NotFoundPage onNavigate={handleNavigate} />;
     }
@@ -137,12 +154,21 @@ export function App() {
         currentRoute={route}
         onNavigate={handleNavigate}
         onOpenAiConcierge={() => setAiConciergeOpen(true)}
+        onOpenWatchParty={() => setWatchPartyOpen(true)}
+        onOpenTrivia={() => setTriviaOpen(true)}
+        onOpenRoulette={() => setRouletteOpen(true)}
       />
 
+      {/* Owner Notice Banner */}
+      <OwnerNoticeBanner />
+
       {/* Main View Area */}
-      <main className="flex-1 relative z-10 pt-20">
+      <main className="flex-1 relative z-10">
         {renderRoutePage()}
       </main>
+
+      {/* Ambient Soundscapes Player */}
+      <AmbientPlayer />
 
       {/* Global Footer */}
       <Footer onNavigate={handleNavigate} />
@@ -161,6 +187,27 @@ export function App() {
         onSearchQuery={(q) => {
           setAiConciergeOpen(false);
           handleNavigate(`search?q=${encodeURIComponent(q)}`);
+        }}
+      />
+
+      <WatchPartyModal
+        isOpen={watchPartyOpen}
+        onClose={() => setWatchPartyOpen(false)}
+        onNavigateToWatch={(id, type, roomId) => {
+          handleNavigate(`watch?type=${type}&id=${id}${roomId ? `&room=${roomId}` : ''}`);
+        }}
+      />
+
+      <TriviaGameModal
+        isOpen={triviaOpen}
+        onClose={() => setTriviaOpen(false)}
+      />
+
+      <SurpriseWheelModal
+        isOpen={rouletteOpen}
+        onClose={() => setRouletteOpen(false)}
+        onNavigateToWatch={(id, type) => {
+          handleNavigate(`watch?type=${type}&id=${id}`);
         }}
       />
 

@@ -21,13 +21,37 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     { id: '4', name: 'David Miller', email: 'david@test.com', role: 'user', status: 'Suspended' },
   ];
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [newPass, setNewPass] = useState('');
+  const [isUpdatingPass, setIsUpdatingPass] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (authenticateAdmin(passcode)) {
+    const success = await authenticateAdmin(passcode);
+    if (success) {
       setAuthenticated(true);
       toast.success('Admin authorization granted');
     } else {
-      setErrorMsg('Invalid admin password. Default passcode: admin67');
+      setErrorMsg('Invalid admin password. Default passcode: MMSW-BLUEBOX');
+    }
+  };
+
+  const handleUpdateFirestorePass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPass.trim()) return;
+    setIsUpdatingPass(true);
+    try {
+      const { updateAdminPasswordInFirestore } = await import('../services/firestoreSync');
+      const ok = await updateAdminPasswordInFirestore(newPass.trim());
+      if (ok) {
+        toast.success(`Firestore admin password updated at /config/Admin panel!`);
+        setNewPass('');
+      } else {
+        toast.error('Failed to update password in Firestore');
+      }
+    } catch (e) {
+      toast.error('Error updating password in Firestore');
+    } finally {
+      setIsUpdatingPass(false);
     }
   };
 
@@ -157,21 +181,50 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
           </table>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
-            <div className="text-xs text-slate-400 font-bold">TMDB API Cache Status</div>
-            <div className="text-2xl font-extrabold text-emerald-400">98.4% Hit Rate</div>
-            <div className="text-[11px] text-slate-500">In-memory LRU Cache active</div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
+              <div className="text-xs text-slate-400 font-bold">TMDB API Cache Status</div>
+              <div className="text-2xl font-extrabold text-emerald-400">98.4% Hit Rate</div>
+              <div className="text-[11px] text-slate-500">In-memory LRU Cache active</div>
+            </div>
+            <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
+              <div className="text-xs text-slate-400 font-bold">Streaming Mirror 1</div>
+              <div className="text-2xl font-extrabold text-emerald-400">Online (24ms)</div>
+              <div className="text-[11px] text-slate-500">vaplayer.ru active</div>
+            </div>
+            <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
+              <div className="text-xs text-slate-400 font-bold">Gemini AI Endpoint</div>
+              <div className="text-2xl font-extrabold text-[var(--color-primary)]">Ready</div>
+              <div className="text-[11px] text-slate-500">Connected & Fallback Active</div>
+            </div>
           </div>
-          <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
-            <div className="text-xs text-slate-400 font-bold">Streaming Mirror 1</div>
-            <div className="text-2xl font-extrabold text-emerald-400">Online (24ms)</div>
-            <div className="text-[11px] text-slate-500">vaplayer.ru active</div>
-          </div>
-          <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
-            <div className="text-xs text-slate-400 font-bold">Gemini AI Endpoint</div>
-            <div className="text-2xl font-extrabold text-[var(--color-primary)]">Ready</div>
-            <div className="text-[11px] text-slate-500">Connected to Gemini 2.5</div>
+
+          {/* Firestore Admin Passcode Manager Card */}
+          <div className="glass-panel p-6 rounded-3xl border border-rose-500/30 space-y-4 bg-black/60">
+            <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+              <Key className="w-4 h-4" /> Firestore Admin Password Manager
+            </div>
+            <p className="text-xs text-slate-400">
+              The admin password is stored in Firestore at <code className="text-rose-300 font-mono">/config/Admin panel</code> in field <code className="text-rose-300 font-mono">"password"</code>.
+            </p>
+
+            <form onSubmit={handleUpdateFirestorePass} className="flex gap-3 max-w-md">
+              <input
+                type="password"
+                placeholder="Enter new admin password"
+                value={newPass}
+                onChange={(e) => setNewPass(e.target.value)}
+                className="flex-1 bg-white/5 border border-white/10 text-white text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-rose-500"
+              />
+              <button
+                type="submit"
+                disabled={!newPass.trim() || isUpdatingPass}
+                className="px-4 py-2.5 bg-rose-500 text-white font-bold text-xs rounded-xl hover:bg-rose-600 disabled:opacity-50"
+              >
+                {isUpdatingPass ? 'Updating...' : 'Update Password'}
+              </button>
+            </form>
           </div>
         </div>
       )}

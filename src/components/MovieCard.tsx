@@ -46,6 +46,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ media, onSelect, progress 
   const handleToggleFav = (e: React.MouseEvent) => {
     e.stopPropagation();
     const added = favoritesStore.toggleFavorite(media);
+    setIsFav(added);
     if (added) {
       toast.success(`Added "${title}" to Favorites`, 'Saved');
     } else {
@@ -100,22 +101,24 @@ export const MovieCard: React.FC<MovieCardProps> = ({ media, onSelect, progress 
               {type}
             </span>
 
-            {rating !== null ? (
-              <span className="px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg text-xs font-black text-[#00d2ff] border border-white/10 shadow-sm">
-                ★ {rating}
-              </span>
-            ) : (
+            <div className="flex items-center gap-1.5">
+              {rating !== null && (
+                <span className="px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg text-xs font-black text-[#00d2ff] border border-white/10 shadow-sm">
+                  ★ {rating}
+                </span>
+              )}
               <button
                 onClick={handleToggleFav}
-                className={`p-1.5 rounded-lg backdrop-blur-md transition-all ${
+                className={`p-1.5 rounded-lg backdrop-blur-md transition-all z-20 ${
                   isFav
-                    ? 'bg-rose-500 text-white shadow-md shadow-rose-500/50'
-                    : 'bg-black/60 text-white/70 hover:text-rose-400'
+                    ? 'bg-rose-500 text-white shadow-md shadow-rose-500/50 scale-105'
+                    : 'bg-black/60 text-white/70 hover:text-rose-400 hover:scale-105'
                 }`}
+                title={isFav ? "Remove from Favorites" : "Add to Favorites"}
               >
-                <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
+                <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
               </button>
-            )}
+            </div>
           </div>
         )}
 

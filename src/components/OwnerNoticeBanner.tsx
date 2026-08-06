@@ -16,7 +16,7 @@ export const OwnerNoticeBanner: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-gradient-to-r from-purple-950/80 via-slate-900/90 to-cyan-950/80 border-y border-white/10 backdrop-blur-md py-2.5 px-4 my-2 relative z-20 shadow-lg overflow-hidden">
+    <div className="w-full bg-gradient-to-r from-purple-950/90 via-slate-900/95 to-cyan-950/90 border-b border-white/10 backdrop-blur-md py-2 px-4 relative z-20 shadow-md overflow-hidden">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs sm:text-sm text-slate-200">
         
         <div className="flex items-center gap-2.5 mx-auto text-center flex-wrap justify-center font-medium">

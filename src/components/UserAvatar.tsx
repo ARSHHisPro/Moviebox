@@ -41,8 +41,8 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
       className={`${sizeClasses} rounded-full bg-gradient-to-tr from-[#7b2cbf] via-[#00d2ff] to-[#ec4899] p-0.5 shadow-lg shadow-[#00d2ff]/20 flex-shrink-0 flex items-center justify-center ${className}`}
       title={username}
     >
-      <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center font-black text-white uppercase tracking-wider select-none">
-        <span className="bg-gradient-to-r from-[#00d2ff] to-[#ec4899] bg-clip-text text-transparent drop-shadow">
+      <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center font-black text-white select-none">
+        <span className="text-[#00d2ff] font-black drop-shadow-[0_0_8px_rgba(0,210,255,0.8)] leading-none">
           {firstLetter}
         </span>
       </div>

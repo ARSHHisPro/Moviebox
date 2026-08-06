@@ -33,10 +33,19 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items, onPlay, onOpenTra
   const year = releaseDate ? releaseDate.substring(0, 4) : '';
   const rating = currentItem.vote_average ? Math.round(currentItem.vote_average * 10) / 10 : null;
 
-  const isFav = favoritesStore.isFavorite(currentItem.id, type);
+  const [isFav, setIsFav] = useState(favoritesStore.isFavorite(currentItem.id, type));
+
+  useEffect(() => {
+    setIsFav(favoritesStore.isFavorite(currentItem.id, type));
+    const unsub = favoritesStore.subscribe(() => {
+      setIsFav(favoritesStore.isFavorite(currentItem.id, type));
+    });
+    return () => unsub();
+  }, [currentItem.id, type]);
 
   const handleToggleFav = () => {
     const added = favoritesStore.toggleFavorite(currentItem);
+    setIsFav(added);
     if (added) toast.success(`Added "${title}" to Favorites`);
     else toast.info(`Removed "${title}" from Favorites`);
   };
