@@ -4,7 +4,8 @@ import { Footer } from './components/Footer';
 import { ToastContainer } from './components/ToastContainer';
 import { TrailerModal } from './components/TrailerModal';
 import { GeminiConciergeModal } from './components/GeminiConciergeModal';
-import { OwnerNoticeBanner } from './components/OwnerNoticeBanner';
+import { AuthModal } from './components/AuthModal';
+import { auth } from './services/auth';
 
 // Pages
 import { HomePage } from './pages/HomePage';
@@ -46,10 +47,19 @@ export function App() {
   const [watchPartyOpen, setWatchPartyOpen] = useState(false);
   const [triviaOpen, setTriviaOpen] = useState(false);
   const [rouletteOpen, setRouletteOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  // Initialize active theme
+  // Initialize active theme and check auth
   useEffect(() => {
     themeManager.init();
+
+    const unsubscribe = auth.subscribe((user) => {
+      if (!user) {
+        setAuthModalOpen(true);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleNavigate = (newRoute: string) => {
@@ -159,9 +169,6 @@ export function App() {
         onOpenRoulette={() => setRouletteOpen(true)}
       />
 
-      {/* Owner Notice Banner */}
-      <OwnerNoticeBanner />
-
       {/* Main View Area */}
       <main className="flex-1 relative z-10">
         {renderRoutePage()}
@@ -209,6 +216,12 @@ export function App() {
         onNavigateToWatch={(id, type) => {
           handleNavigate(`watch?type=${type}&id=${id}`);
         }}
+      />
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={() => setAuthModalOpen(false)}
       />
 
       <ToastContainer />

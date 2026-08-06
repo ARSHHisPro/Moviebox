@@ -104,15 +104,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           </span>
         </div>
 
-        {/* Desktop Navigation Links for Ultra Wide Displays */}
-        <nav className="hidden 2xl:flex items-center gap-1">
-          {navLinks.slice(0, 7).map((link) => {
+        {/* Desktop Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-1">
+          {navLinks.slice(0, 6).map((link) => {
             const isActive = currentRoute === link.route || currentRoute.startsWith(link.route);
             return (
               <button
                 key={link.route}
                 onClick={() => onNavigate(link.route)}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                className={`px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
                   isActive
                     ? 'bg-white/10 text-[#00d2ff] border border-[#00d2ff]/30 shadow-sm'
                     : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -268,7 +268,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Mobile / Drawer Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-200 2xl:hidden flex-shrink-0 cursor-pointer"
+              className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-200 lg:hidden flex-shrink-0 cursor-pointer"
               title="Open Navigation Menu"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -279,7 +279,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile & Tablet Drawer Navigation */}
       {isMobileMenuOpen && (
-        <div className="2xl:hidden glass-panel border-t border-white/10 py-3 px-4 flex flex-col gap-1.5 animate-in slide-in-from-top duration-200">
+        <div className="lg:hidden glass-panel border-t border-white/10 py-3 px-4 flex flex-col gap-1.5 animate-in slide-in-from-top duration-200">
           {navLinks.map((link) => {
             const isActive = currentRoute === link.route || currentRoute.startsWith(link.route);
             return (

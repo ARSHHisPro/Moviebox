@@ -113,13 +113,16 @@ class AuthManager {
     try {
       const stored = localStorage.getItem(AUTH_STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // If stored user was the auto-generated owner fallback, clear it so real user authentication is requested
+        if (parsed.uid === 'owner-ctrlquest18') {
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+          return null;
+        }
+        return parsed;
       }
     } catch {}
-    // Default to ctrlquest18 account initially unless logged out
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(DEFAULT_OWNER_USER));
-    localStorage.setItem(ADMIN_FLAG_KEY, 'true');
-    return DEFAULT_OWNER_USER;
+    return null;
   }
 
   private saveToStorage(user: UserProfile | null) {

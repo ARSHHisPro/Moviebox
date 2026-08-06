@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { signInWithEmail, signUpWithEmail, signInWithGoogle } from '../services/auth';
 import { Film, Lock, Mail, User, Sparkles, LogIn, Chrome } from 'lucide-react';
 import { toast } from '../services/toast';
-import { OwnerNoticeBanner } from '../components/OwnerNoticeBanner';
 
 interface AuthPageProps {
   onNavigate: (route: string) => void;
@@ -76,9 +75,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate, onSuccess }) => 
 
   return (
     <div className="space-y-6">
-      {/* Notice Banner */}
-      <OwnerNoticeBanner />
-
       <div className="max-w-md mx-auto my-8 px-4">
         <div className="glass-panel p-8 rounded-3xl border border-white/20 shadow-2xl space-y-6 bg-black/90">
           

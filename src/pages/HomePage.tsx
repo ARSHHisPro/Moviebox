@@ -4,7 +4,6 @@ import { MediaItem, WatchProgress } from '../types';
 import { HeroBanner } from '../components/HeroBanner';
 import { Carousel } from '../components/Carousel';
 import { MovieCard } from '../components/MovieCard';
-import { OwnerNoticeBanner } from '../components/OwnerNoticeBanner';
 import { continueWatchingStore } from '../services/store';
 import { Flame, PlayCircle, Film, Tv, Star, Sparkles, ChevronRight, Users, Shuffle, Trophy, Headphones } from 'lucide-react';
 
