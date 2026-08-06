@@ -52,6 +52,9 @@ class LockStore {
             this.saveToStorage();
             this.notify();
           }
+        } else {
+          // Auto-initialize document in Firestore if it doesn't exist
+          setDoc(this.docRef, { locks: this.locks, lastUpdated: Date.now() }, { merge: true }).catch(() => {});
         }
       }, (err) => {
         console.warn('Firestore locks snapshot warning:', err);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, X, Send, Copy, Play, Pause, Tv, Sparkles, Check } from 'lucide-react';
 import { toast } from '../services/toast';
 import { createWatchPartyRoom, subscribeToWatchParty, updateWatchPartyState, WatchPartyRoom } from '../services/firestoreSync';
+import { getCurrentUser } from '../services/auth';
 
 interface WatchPartyModalProps {
   isOpen: boolean;
@@ -44,10 +45,14 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
       return;
     }
     setIsCreating(true);
+    const currentUser = getCurrentUser();
+    const hostId = currentUser ? currentUser.uid : 'guest-' + Date.now();
+    const hostName = currentUser ? currentUser.displayName : 'Guest Host';
+
     try {
       const code = await createWatchPartyRoom({
-        hostId: 'user-ctrlquest18',
-        hostName: 'ctrlquest18',
+        hostId,
+        hostName,
         mediaId: mediaItem.id,
         mediaType: mediaItem.type,
         mediaTitle: mediaItem.title,
@@ -85,9 +90,12 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
     e.preventDefault();
     if (!chatText.trim() || !roomData || !roomId) return;
 
+    const currentUser = getCurrentUser();
+    const sender = currentUser ? currentUser.displayName : 'Guest Cinephile';
+
     const newMsg = {
       id: Date.now().toString(),
-      sender: 'ctrlquest18',
+      sender,
       text: chatText.trim(),
       time: Date.now()
     };

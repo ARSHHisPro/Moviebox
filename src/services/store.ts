@@ -1,11 +1,14 @@
 import { FavoriteItem, WatchProgress, WatchHistoryItem, MediaItem, MediaType } from '../types';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase';
+import { auth } from './auth';
 
 type Listener<T> = (items: T[]) => void;
 
 class SubscribedStore<T> {
-  private key: string;
+  protected key: string;
   private listeners: Set<Listener<T>> = new Set();
-  private items: T[] = [];
+  protected items: T[] = [];
 
   constructor(key: string) {
     this.key = key;
@@ -21,7 +24,7 @@ class SubscribedStore<T> {
     }
   }
 
-  private save() {
+  protected save() {
     try {
       localStorage.setItem(this.key, JSON.stringify(this.items));
     } catch (e) {
@@ -38,7 +41,7 @@ class SubscribedStore<T> {
     };
   }
 
-  private notify() {
+  protected notify() {
     this.listeners.forEach((l) => l(this.items));
   }
 
@@ -50,21 +53,77 @@ class SubscribedStore<T> {
     return this.getAll();
   }
 
-  public setAll(items: T[]) {
+  public setAll(items: T[], syncToRemote: boolean = true) {
     this.items = items;
     this.save();
+    if (syncToRemote) {
+      this.syncToFirestore();
+    }
+  }
+
+  protected syncToFirestore() {
+    // Override in subclass if needed
   }
 
   public clear() {
     this.items = [];
     this.save();
+    this.syncToFirestore();
   }
 }
 
-// 1. Favorites Store
+// 1. Favorites Store with Firestore backup
 class FavoritesStore extends SubscribedStore<FavoriteItem> {
+  private currentUserId: string | null = null;
+  private unsubscribeRemote: (() => void) | null = null;
+
   constructor() {
     super('moviebox_favorites');
+    auth.subscribe((user) => {
+      const newUid = user ? user.uid : null;
+      if (newUid !== this.currentUserId) {
+        this.currentUserId = newUid;
+        this.initUserRemoteSync(newUid);
+      }
+    });
+  }
+
+  private initUserRemoteSync(uid: string | null) {
+    if (this.unsubscribeRemote) {
+      this.unsubscribeRemote();
+      this.unsubscribeRemote = null;
+    }
+    if (!uid) return;
+
+    try {
+      const favDocRef = doc(db, 'users', uid, 'data', 'favorites');
+      this.unsubscribeRemote = onSnapshot(favDocRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (Array.isArray(data.items)) {
+            this.items = data.items;
+            this.save();
+          }
+        } else if (this.items.length > 0) {
+          // Push initial local items to Firestore
+          setDoc(favDocRef, { items: this.items, updatedAt: Date.now() }, { merge: true }).catch(() => {});
+        }
+      }, (err) => {
+        console.warn('Firestore favorites sync warning:', err);
+      });
+    } catch (e) {
+      console.warn('Error setting up remote favorites listener:', e);
+    }
+  }
+
+  protected syncToFirestore() {
+    if (!this.currentUserId) return;
+    try {
+      const favDocRef = doc(db, 'users', this.currentUserId, 'data', 'favorites');
+      setDoc(favDocRef, { items: this.items, updatedAt: Date.now() }, { merge: true }).catch(() => {});
+    } catch (e) {
+      console.warn('Firestore favorites save error:', e);
+    }
   }
 
   public isFavorite(id: number, type: MediaType): boolean {

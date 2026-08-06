@@ -104,6 +104,34 @@ export async function updateAdminPasswordInFirestore(newPassword: string): Promi
   }
 }
 
+// Ensure Firestore system documents exist automatically on app startup
+export async function ensureFirestoreDefaults() {
+  try {
+    const adminDocRef = doc(db, 'config', 'Admin panel');
+    const adminSnap = await getDoc(adminDocRef);
+    if (!adminSnap.exists()) {
+      await setDoc(adminDocRef, {
+        password: 'MMSW-BLUEBOX',
+        updatedAt: Date.now()
+      });
+    }
+
+    const locksDocRef = doc(db, 'config', 'locked_movies');
+    const locksSnap = await getDoc(locksDocRef);
+    if (!locksSnap.exists()) {
+      await setDoc(locksDocRef, {
+        locks: {},
+        lastUpdated: Date.now()
+      });
+    }
+  } catch (e) {
+    console.warn('Firestore auto-initialization warning:', e);
+  }
+}
+
+// Auto-run defaults check on import
+ensureFirestoreDefaults();
+
 // User Custom Playlists
 export async function getUserPlaylists(userId: string): Promise<CustomPlaylist[]> {
   try {
@@ -134,20 +162,43 @@ export async function saveUserPlaylist(userId: string, playlist: Omit<CustomPlay
   }
 }
 
-// Community Reviews
+// Community Reviews (Realtime + Single Query to avoid composite index requirements)
+export function subscribeToMediaReviews(mediaId: number, callback: (reviews: CommunityReview[]) => void) {
+  try {
+    const q = query(
+      collection(db, 'reviews'),
+      where('mediaId', '==', mediaId)
+    );
+    return onSnapshot(q, (snap) => {
+      const reviews: CommunityReview[] = [];
+      snap.forEach((d) => {
+        reviews.push({ id: d.id, ...d.data() } as CommunityReview);
+      });
+      reviews.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      callback(reviews);
+    }, (err) => {
+      console.warn('Reviews snapshot listener warning:', err);
+      callback([]);
+    });
+  } catch (e) {
+    console.warn('Error setting up reviews listener:', e);
+    return () => {};
+  }
+}
+
 export async function getMediaReviews(mediaId: number): Promise<CommunityReview[]> {
   try {
     const q = query(
       collection(db, 'reviews'),
       where('mediaId', '==', mediaId),
-      orderBy('createdAt', 'desc'),
-      limit(20)
+      limit(50)
     );
     const snap = await getDocs(q);
     const reviews: CommunityReview[] = [];
     snap.forEach((d) => {
       reviews.push({ id: d.id, ...d.data() } as CommunityReview);
     });
+    reviews.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     return reviews;
   } catch (e) {
     console.warn('Error fetching reviews:', e);

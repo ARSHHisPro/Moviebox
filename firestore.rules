@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reviews collection: public read, write allowed
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if request.auth != null;
+    }
+
+    // Watch Parties collection: public read, write allowed
+    match /watch_parties/{roomId} {
+      allow read, write: if true;
+    }
+
+    // Config collection (locks & admin settings): public read, write allowed
+    match /config/{configId} {
+      allow read, write: if true;
+    }
+
+    // Leaderboard: public read, write allowed
+    match /leaderboard/{userId} {
+      allow read, write: if true;
+    }
+
+    // Users and user subcollections: read/write allowed for owner or authenticated users
+    match /users/{userId} {
+      allow read, write: if true;
+      match /{allSubcollections=**} {
+        allow read, write: if true;
+      }
+    }
+  }
+}

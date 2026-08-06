@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "reviews": {
+      "path": "reviews/{reviewId}",
+      "fields": {
+        "mediaId": { "type": "number" },
+        "mediaType": { "type": "string" },
+        "mediaTitle": { "type": "string" },
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviewText": { "type": "string" },
+        "upvotes": { "type": "number" },
+        "createdAt": { "type": "number" }
+      }
+    },
+    "watch_parties": {
+      "path": "watch_parties/{roomId}",
+      "fields": {
+        "hostId": { "type": "string" },
+        "hostName": { "type": "string" },
+        "mediaId": { "type": "number" },
+        "mediaType": { "type": "string" },
+        "mediaTitle": { "type": "string" },
+        "mediaPoster": { "type": "string" },
+        "currentTime": { "type": "number" },
+        "isPlaying": { "type": "boolean" },
+        "participantCount": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      }
+    },
+    "config": {
+      "path": "config/{configId}",
+      "fields": {
+        "password": { "type": "string" },
+        "locks": { "type": "map" },
+        "lastUpdated": { "type": "number" }
+      }
+    },
+    "leaderboard": {
+      "path": "leaderboard/{userId}",
+      "fields": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "avatar": { "type": "string" },
+        "score": { "type": "number" },
+        "streak": { "type": "number" },
+        "rankTitle": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      }
+    },
+    "users": {
+      "path": "users/{userId}",
+      "fields": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "username": { "type": "string" },
+        "isAdmin": { "type": "boolean" },
+        "avatar": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      }
+    }
+  }
+}

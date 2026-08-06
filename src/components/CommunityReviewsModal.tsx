@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Star, X, ThumbsUp, MessageSquare, Send, Sparkles } from 'lucide-react';
 import { toast } from '../services/toast';
-import { getMediaReviews, addMediaReview, CommunityReview } from '../services/firestoreSync';
+import { addMediaReview, subscribeToMediaReviews, CommunityReview } from '../services/firestoreSync';
+import { getCurrentUser } from '../services/auth';
 
 interface CommunityReviewsModalProps {
   isOpen: boolean;
@@ -24,17 +25,14 @@ export const CommunityReviewsModal: React.FC<CommunityReviewsModalProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (isOpen && mediaId) {
-      loadReviews();
-    }
-  }, [isOpen, mediaId]);
-
-  const loadReviews = async () => {
+    if (!isOpen || !mediaId) return;
     setIsLoading(true);
-    const list = await getMediaReviews(mediaId);
-    setReviews(list);
-    setIsLoading(false);
-  };
+    const unsubscribe = subscribeToMediaReviews(mediaId, (list) => {
+      setReviews(list);
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [isOpen, mediaId]);
 
   if (!isOpen) return null;
 
@@ -42,14 +40,19 @@ export const CommunityReviewsModal: React.FC<CommunityReviewsModalProps> = ({
     e.preventDefault();
     if (!reviewText.trim()) return;
 
+    const currentUser = getCurrentUser();
+    const userId = currentUser ? currentUser.uid : 'guest-' + Date.now();
+    const username = currentUser ? currentUser.displayName : 'Guest Cinephile';
+    const userAvatar = currentUser ? currentUser.avatar : '';
+
     try {
       await addMediaReview({
         mediaId,
         mediaType,
         mediaTitle,
-        userId: 'ctrlquest18',
-        username: 'ctrlquest18',
-        userAvatar: '',
+        userId,
+        username,
+        userAvatar,
         rating,
         reviewText: reviewText.trim(),
         upvotes: 0,
@@ -57,7 +60,6 @@ export const CommunityReviewsModal: React.FC<CommunityReviewsModalProps> = ({
       });
       toast.success('Review posted to Firestore community hub!');
       setReviewText('');
-      loadReviews();
     } catch (e) {
       toast.error('Failed posting review');
     }
