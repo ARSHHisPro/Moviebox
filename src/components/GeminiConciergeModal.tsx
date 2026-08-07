@@ -58,7 +58,7 @@ export const GeminiConciergeModal: React.FC<GeminiConciergeModalProps> = ({ isOp
         ...newMessages,
         {
           role: 'model',
-          content: `🍿 **MovieBox AI Assistant:**\n\nHere are top handpicked recommendations for "${promptText}":\n\n1. **Interstellar (2014)** — Epic space journey & mind-bending visuals\n2. **Inception (2010)** — High-stakes dream heist masterpiece\n3. **Severance (2022)** — Gripping dystopian mystery series\n\n✨ *Search any title above in the search bar to stream instantly!*`
+          content: 'MovieBox AI Assistant:\n\nHere are top handpicked recommendations for "' + promptText + '":\n\n1. **Interstellar (2014)** — Epic space journey & mind-bending visuals\n2. **Inception (2010)** — High-stakes dream heist masterpiece\n3. **Severance (2022)** — Gripping dystopian mystery series\n\nTip: Search any title above in the search bar to stream instantly!'
         }
       ]);
     } finally {
@@ -157,7 +157,7 @@ export const GeminiConciergeModal: React.FC<GeminiConciergeModalProps> = ({ isOp
               onClick={() => handleSend(qp)}
               className="px-3 py-1 rounded-full text-xs font-medium bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-all flex-shrink-0"
             >
-              ✨ {qp}
+              {qp}
             </button>
           ))}
         </div>

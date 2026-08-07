@@ -76,13 +76,13 @@ export const SurpriseWheelModal: React.FC<SurpriseWheelModalProps> = ({
                 disabled={isSpinning}
                 className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[var(--color-secondary)] to-[var(--color-primary)] text-white font-extrabold text-sm shadow-xl hover:brightness-110 disabled:opacity-50"
               >
-                {isSpinning ? 'Spinning Roulette...' : 'Spin The Wheel 🎲'}
+                {isSpinning ? 'Spinning Roulette...' : 'Spin The Wheel'}
               </button>
             </div>
           ) : (
             <div className="space-y-5 animate-in zoom-in-95 duration-200">
               <span className="text-[10px] px-3 py-1 rounded-full bg-[var(--color-primary)]/20 text-[var(--color-primary)] font-bold uppercase border border-[var(--color-primary)]/30">
-                🎉 Your Surprise Pick!
+                 Your Surprise Pick!
               </span>
 
               {selectedMovie.poster_path && (

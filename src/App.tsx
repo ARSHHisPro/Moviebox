@@ -5,6 +5,7 @@ import { ToastContainer } from './components/ToastContainer';
 import { TrailerModal } from './components/TrailerModal';
 import { GeminiConciergeModal } from './components/GeminiConciergeModal';
 import { AuthModal } from './components/AuthModal';
+import { LoadingScreen } from './components/LoadingScreen';
 import { auth } from './services/auth';
 
 // Pages
@@ -42,6 +43,7 @@ export function App() {
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [trailerTitle, setTrailerTitle] = useState('');
   const [aiConciergeOpen, setAiConciergeOpen] = useState(false);
+  const [showLoading, setShowLoading] = useState(true);
 
   // Cinephile Tool Modals State
   const [watchPartyOpen, setWatchPartyOpen] = useState(false);
@@ -52,15 +54,42 @@ export function App() {
   // Initialize active theme and check auth
   useEffect(() => {
     themeManager.init();
-
-    const unsubscribe = auth.subscribe((user) => {
-      if (!user) {
-        setAuthModalOpen(true);
-      }
-    });
-
-    return () => unsubscribe();
   }, []);
+
+  // Premium custom cursor
+  useEffect(() => {
+    const cursor = document.createElement('div');
+    cursor.className = 'custom-cursor';
+    document.body.appendChild(cursor);
+
+    const handleMouseMove = (e: MouseEvent) => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+    };
+
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'BUTTON' || target.tagName === 'A' || target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
+        cursor.classList.add('hover');
+      } else {
+        cursor.classList.remove('hover');
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseover', handleMouseOver);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseover', handleMouseOver);
+      cursor.remove();
+    };
+  }, []);
+
+  // Loading screen complete handler
+  const handleLoadingComplete = () => {
+    setShowLoading(false);
+  };
 
   const handleNavigate = (newRoute: string) => {
     setRoute(newRoute);
@@ -143,21 +172,28 @@ export function App() {
   };
 
   return (
-    <div className="bg-[#020202] min-h-screen text-white flex flex-col font-sans selection:bg-[#00d2ff] selection:text-black relative overflow-x-hidden">
-      
-      {/* Background Radial Gradient Canvas */}
-      <div
-        className="fixed inset-0 pointer-events-none -z-20"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 0% 0%, #111111 0%, #020202 50%), radial-gradient(circle at 100% 100%, #1a0b2e 0%, #020202 50%)',
-        }}
-      />
+    <>
+      {showLoading && <LoadingScreen onComplete={handleLoadingComplete} />}
 
-      {/* Aurora Glow Effects */}
-      <div className="fixed top-[-20%] left-[10%] w-[500px] h-[500px] bg-[#00d2ff]/10 blur-[120px] rounded-full pointer-events-none -z-10" />
-      <div className="fixed bottom-[-10%] right-[5%] w-[400px] h-[400px] bg-[#7b2cbf]/10 blur-[100px] rounded-full pointer-events-none -z-10" />
-      <div className="fixed top-[40%] right-[20%] w-[300px] h-[300px] bg-[#ec4899]/5 blur-[100px] rounded-full pointer-events-none -z-10" />
+      <div className="bg-[#020202] min-h-screen text-white flex flex-col font-sans selection:bg-[#00d2ff] selection:text-black relative overflow-x-hidden">
+        
+        {/* Aurora Background */}
+        <div className="aurora-bg" />
+        <div className="noise-overlay" />
+        
+        {/* Background Radial Gradient Canvas */}
+        <div
+          className="fixed inset-0 pointer-events-none -z-20"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 0% 0%, #111111 0%, #020202 50%), radial-gradient(circle at 100% 100%, #1a0b2e 0%, #020202 50%)',
+          }}
+        />
+
+        {/* Aurora Glow Effects */}
+        <div className="fixed top-[-20%] left-[10%] w-[500px] h-[500px] bg-[#00d2ff]/10 blur-[120px] rounded-full pointer-events-none -z-10" />
+        <div className="fixed bottom-[-10%] right-[5%] w-[400px] h-[400px] bg-[#7b2cbf]/10 blur-[100px] rounded-full pointer-events-none -z-10" />
+        <div className="fixed top-[40%] right-[20%] w-[300px] h-[300px] bg-[#ec4899]/5 blur-[100px] rounded-full pointer-events-none -z-10" />
 
       {/* Global Navigation Bar */}
       <Navbar
@@ -225,7 +261,8 @@ export function App() {
       />
 
       <ToastContainer />
-    </div>
+      </div>
+    </>
   );
 }
 

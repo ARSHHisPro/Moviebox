@@ -43,21 +43,16 @@ class AuthManager {
         this.user = await this.mapAndSyncFirestoreUser(firebaseUser);
         this.saveToStorage(this.user);
       } else {
-        const isLoggedOut = localStorage.getItem('moviebox_logged_out') === 'true';
-        if (isLoggedOut) {
-          this.user = null;
-        } else {
-          this.user = this.loadFromStorage();
-        }
+        this.user = null;
       }
       this.initialized = true;
       this.notify();
     });
 
-    // Fallback load from localStorage while Firebase initializes
-    if (!this.initialized) {
-      this.user = this.loadFromStorage();
-    }
+    // Clear any stale local session on startup; require fresh Firebase auth
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(ADMIN_FLAG_KEY);
+    this.user = null;
   }
 
   private async mapAndSyncFirestoreUser(fUser: FirebaseUser): Promise<UserProfile> {

@@ -26,7 +26,7 @@ export const VipTicketModal: React.FC<VipTicketModalProps> = ({
   const ticketNumber = `MBX-${mediaItem.id}-${Math.floor(1000 + Math.random() * 9000)}`;
 
   const handleShare = () => {
-    navigator.clipboard.writeText(`🍿 Check out my MovieBox VIP Cinema Pass for "${mediaItem.title}"! Ticket ID: ${ticketNumber}`);
+    navigator.clipboard.writeText('Check out my MovieBox VIP Cinema Pass for "' + mediaItem.title + '"! Ticket ID: ' + ticketNumber);
     setCopied(true);
     toast.success('VIP Pass details copied to clipboard!');
     setTimeout(() => setCopied(false), 2000);

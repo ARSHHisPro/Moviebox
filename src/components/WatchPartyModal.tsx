@@ -63,7 +63,7 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
           {
             id: '1',
             sender: 'System',
-            text: `🎉 Watch Party initialized for "${mediaItem.title}"! Share room code to invite friends.`,
+            text: 'Watch Party initialized for "' + mediaItem.title + '"! Share room code to invite friends.',
             time: Date.now()
           }
         ],

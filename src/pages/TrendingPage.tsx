@@ -91,7 +91,7 @@ export const TrendingPage: React.FC<TrendingPageProps> = ({ onNavigate }) => {
             return (
               <div key={`${type}-${item.id}`} className="relative">
                 <div className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded-full bg-black/80 text-[var(--color-primary)] font-extrabold text-[11px] border border-[var(--color-primary)]/40">
-                  🔥 #{idx + 1}
+                  #{idx + 1}
                 </div>
                 <MovieCard
                   media={{ ...item, media_type: type }}

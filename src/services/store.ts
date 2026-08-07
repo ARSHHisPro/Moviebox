@@ -1,7 +1,6 @@
 import { FavoriteItem, WatchProgress, WatchHistoryItem, MediaItem, MediaType } from '../types';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from './firebase';
 import { auth } from './auth';
+import { api } from './api';
 
 type Listener<T> = (items: T[]) => void;
 
@@ -53,29 +52,20 @@ class SubscribedStore<T> {
     return this.getAll();
   }
 
-  public setAll(items: T[], syncToRemote: boolean = true) {
+  public setAll(items: T[]) {
     this.items = items;
     this.save();
-    if (syncToRemote) {
-      this.syncToFirestore();
-    }
-  }
-
-  protected syncToFirestore() {
-    // Override in subclass if needed
   }
 
   public clear() {
     this.items = [];
     this.save();
-    this.syncToFirestore();
   }
 }
 
-// 1. Favorites Store with Firestore backup
+// 1. Favorites Store with backend sync
 class FavoritesStore extends SubscribedStore<FavoriteItem> {
   private currentUserId: string | null = null;
-  private unsubscribeRemote: (() => void) | null = null;
 
   constructor() {
     super('moviebox_favorites');
@@ -83,46 +73,19 @@ class FavoritesStore extends SubscribedStore<FavoriteItem> {
       const newUid = user ? user.uid : null;
       if (newUid !== this.currentUserId) {
         this.currentUserId = newUid;
-        this.initUserRemoteSync(newUid);
+        if (newUid) {
+          this.syncToBackend();
+        }
       }
     });
   }
 
-  private initUserRemoteSync(uid: string | null) {
-    if (this.unsubscribeRemote) {
-      this.unsubscribeRemote();
-      this.unsubscribeRemote = null;
-    }
-    if (!uid) return;
-
-    try {
-      const favDocRef = doc(db, 'users', uid, 'data', 'favorites');
-      this.unsubscribeRemote = onSnapshot(favDocRef, (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          if (Array.isArray(data.items)) {
-            this.items = data.items;
-            this.save();
-          }
-        } else if (this.items.length > 0) {
-          // Push initial local items to Firestore
-          setDoc(favDocRef, { items: this.items, updatedAt: Date.now() }, { merge: true }).catch(() => {});
-        }
-      }, (err) => {
-        console.warn('Firestore favorites sync warning:', err);
-      });
-    } catch (e) {
-      console.warn('Error setting up remote favorites listener:', e);
-    }
-  }
-
-  protected syncToFirestore() {
+  private async syncToBackend() {
     if (!this.currentUserId) return;
     try {
-      const favDocRef = doc(db, 'users', this.currentUserId, 'data', 'favorites');
-      setDoc(favDocRef, { items: this.items, updatedAt: Date.now() }, { merge: true }).catch(() => {});
+      await api.updateUserData('favorites', null, { items: this.items, syncedAt: Date.now() }, 'replace');
     } catch (e) {
-      console.warn('Firestore favorites save error:', e);
+      console.warn('Backend favorites sync failed:', e);
     }
   }
 
@@ -137,7 +100,8 @@ class FavoritesStore extends SubscribedStore<FavoriteItem> {
     if (existing) {
       const updated = this.getAll().filter((f) => !(f.id === media.id && f.type === type));
       this.setAll(updated);
-      return false; // removed
+      this.syncToBackend();
+      return false;
     } else {
       const newItem: FavoriteItem = {
         id: media.id,
@@ -151,13 +115,15 @@ class FavoritesStore extends SubscribedStore<FavoriteItem> {
         addedAt: Date.now(),
       };
       this.setAll([newItem, ...this.getAll()]);
-      return true; // added
+      this.syncToBackend();
+      return true;
     }
   }
 
   public removeFavorite(id: number, type: MediaType) {
     const updated = this.getAll().filter((f) => !(f.id === id && f.type === type));
     this.setAll(updated);
+    this.syncToBackend();
   }
 }
 
@@ -185,12 +151,10 @@ class ContinueWatchingStore extends SubscribedStore<WatchProgress> {
     if (!progressData.duration || progressData.duration <= 0) return;
     const progressRatio = Math.min(1, Math.max(0, progressData.lastPosition / progressData.duration));
 
-    // Filter existing
     const filtered = this.getAll().filter(
       (item) => !(item.id === progressData.id && item.type === progressData.type && item.season === progressData.season && item.episode === progressData.episode)
     );
 
-    // If completed (> 95%), don't show in continue watching
     if (progressRatio > 0.95) {
       this.setAll(filtered);
       return;
@@ -202,7 +166,6 @@ class ContinueWatchingStore extends SubscribedStore<WatchProgress> {
       lastWatched: Date.now(),
     };
 
-    // Keep max 50 items
     const updated = [newItem, ...filtered].slice(0, 50);
     this.setAll(updated);
   }

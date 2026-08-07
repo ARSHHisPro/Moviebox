@@ -24,56 +24,56 @@ const SERVERS = [
   { 
     id: 'vidlink', 
     name: 'Server 1 (VidLink HD)', 
-    movieUrl: (id: number) => `https://vidlink.pro/movie/${id}`,
-    tvUrl: (id: number, s: number, e: number) => `https://vidlink.pro/tv/${id}/${s}/${e}`
+    movieUrl: (id: number, resumeAt = 0) => `https://vidlink.pro/movie/${id}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`,
+    tvUrl: (id: number, s: number, e: number, resumeAt = 0) => `https://vidlink.pro/tv/${id}/${s}/${e}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`
   },
   { 
     id: 'vidsrc_cc', 
     name: 'Server 2 (VidSrc.cc)', 
-    movieUrl: (id: number) => `https://vidsrc.cc/v2/embed/movie/${id}`,
-    tvUrl: (id: number, s: number, e: number) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`
+    movieUrl: (id: number, resumeAt = 0) => `https://vidsrc.cc/v2/embed/movie/${id}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`,
+    tvUrl: (id: number, s: number, e: number, resumeAt = 0) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`
   },
   { 
     id: 'vidbinge', 
     name: 'Server 3 (VidBinge Pro)', 
-    movieUrl: (id: number) => `https://vidbinge.dev/embed/movie/${id}`,
-    tvUrl: (id: number, s: number, e: number) => `https://vidbinge.dev/embed/tv/${id}/${s}/${e}`
+    movieUrl: (id: number, resumeAt = 0) => `https://vidbinge.dev/embed/movie/${id}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`,
+    tvUrl: (id: number, s: number, e: number, resumeAt = 0) => `https://vidbinge.dev/embed/tv/${id}/${s}/${e}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`
   },
   { 
     id: 'vidsrc_to', 
     name: 'Server 4 (VidSrc.to)', 
-    movieUrl: (id: number) => `https://vidsrc.to/embed/movie/${id}`,
-    tvUrl: (id: number, s: number, e: number) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`
+    movieUrl: (id: number, resumeAt = 0) => `https://vidsrc.to/embed/movie/${id}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`,
+    tvUrl: (id: number, s: number, e: number, resumeAt = 0) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`
   },
   { 
     id: 'embedsu', 
     name: 'Server 5 (Embed.su)', 
-    movieUrl: (id: number) => `https://embed.su/embed/movie/${id}`,
-    tvUrl: (id: number, s: number, e: number) => `https://embed.su/embed/tv/${id}/${s}/${e}`
+    movieUrl: (id: number, resumeAt = 0) => `https://embed.su/embed/movie/${id}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`,
+    tvUrl: (id: number, s: number, e: number, resumeAt = 0) => `https://embed.su/embed/tv/${id}/${s}/${e}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`
   },
   { 
     id: 'autoembed', 
     name: 'Server 6 (AutoEmbed 4K)', 
-    movieUrl: (id: number) => `https://player.autoembed.cc/embed/movie/${id}`,
-    tvUrl: (id: number, s: number, e: number) => `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`
+    movieUrl: (id: number, resumeAt = 0) => `https://player.autoembed.cc/embed/movie/${id}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`,
+    tvUrl: (id: number, s: number, e: number, resumeAt = 0) => `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`
   },
   { 
     id: '2embed', 
     name: 'Server 7 (2Embed)', 
-    movieUrl: (id: number) => `https://www.2embed.cc/embed/${id}`,
-    tvUrl: (id: number, s: number, e: number) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`
+    movieUrl: (id: number, resumeAt = 0) => `https://www.2embed.cc/embed/${id}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`,
+    tvUrl: (id: number, s: number, e: number, resumeAt = 0) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}${resumeAt > 0 ? '&resumeAt=' + resumeAt : ''}`
   },
   { 
     id: 'vidsrc_pro', 
     name: 'Server 8 (VidSrc.pro)', 
-    movieUrl: (id: number) => `https://vidsrc.pro/embed/movie/${id}`,
-    tvUrl: (id: number, s: number, e: number) => `https://vidsrc.pro/embed/tv/${id}/${s}/${e}`
+    movieUrl: (id: number, resumeAt = 0) => `https://vidsrc.pro/embed/movie/${id}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`,
+    tvUrl: (id: number, s: number, e: number, resumeAt = 0) => `https://vidsrc.pro/embed/tv/${id}/${s}/${e}${resumeAt > 0 ? '?resumeAt=' + resumeAt : ''}`
   },
   { 
     id: 'smashystream', 
     name: 'Server 9 (SmashyStream)', 
-    movieUrl: (id: number) => `https://embed.smashystream.com/playere.php?tmdb=${id}`,
-    tvUrl: (id: number, s: number, e: number) => `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`
+    movieUrl: (id: number, resumeAt = 0) => `https://embed.smashystream.com/playere.php?tmdb=${id}${resumeAt > 0 ? '&resumeAt=' + resumeAt : ''}`,
+    tvUrl: (id: number, s: number, e: number, resumeAt = 0) => `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}${resumeAt > 0 ? '&resumeAt=' + resumeAt : ''}`
   }
 ];
 
@@ -120,34 +120,18 @@ export const Player: React.FC<PlayerProps> = ({
   // Check stored continueWatching last position
   const savedProgress = continueWatchingStore.getById(media.id, type, season, episode);
   const resumeSeconds = savedProgress?.lastPosition || 0;
+  const playStartTimeRef = useRef(Date.now());
+  const [currentResumePosition, setCurrentResumePosition] = useState(resumeSeconds);
 
-  // Load TV season episodes if TV show
-  useEffect(() => {
-    if (type === 'tv') {
-      tmdb.getTvSeasonDetails(media.id, season)
-        .then((res) => {
-          setEpisodesList(res.episodes || []);
-        })
-        .catch((err) => console.error('Failed to load season episodes', err));
-    }
-  }, [media.id, type, season]);
-
-  // Record history & continue watching interval when signed in
+  // Update resume position every 15 seconds based on elapsed time
   useEffect(() => {
     if (!currentUser) return;
 
-    watchHistoryStore.recordWatch({
-      id: media.id,
-      type,
-      title,
-      poster: media.poster_path,
-      progress: 0.1,
-      duration: 3600,
-      season: type === 'tv' ? season : undefined,
-      episode: type === 'tv' ? episode : undefined,
-    });
-
     const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - playStartTimeRef.current) / 1000);
+      const newPosition = resumeSeconds + elapsed;
+      setCurrentResumePosition(newPosition);
+      
       continueWatchingStore.saveProgress({
         id: media.id,
         type,
@@ -156,7 +140,7 @@ export const Player: React.FC<PlayerProps> = ({
         backdrop: media.backdrop_path,
         season: type === 'tv' ? season : undefined,
         episode: type === 'tv' ? episode : undefined,
-        lastPosition: resumeSeconds + 60,
+        lastPosition: newPosition,
         duration: 3600,
       });
     }, 15000);
@@ -164,13 +148,20 @@ export const Player: React.FC<PlayerProps> = ({
     return () => clearInterval(interval);
   }, [currentUser, media.id, type, season, episode, title, resumeSeconds, media.poster_path, media.backdrop_path]);
 
+  // Reset play start time when media changes
+  useEffect(() => {
+    playStartTimeRef.current = Date.now();
+    setCurrentResumePosition(resumeSeconds);
+  }, [media.id, type, season, episode]);
+
   // Build current embed URL
   const getEmbedUrl = () => {
     const server = SERVERS[selectedServer] || SERVERS[0];
+    const resumeAt = Math.floor(currentResumePosition);
     if (type === 'movie') {
-      return server.movieUrl(media.id);
+      return server.movieUrl(media.id, resumeAt);
     } else {
-      return server.tvUrl(media.id, season, episode);
+      return server.tvUrl(media.id, season, episode, resumeAt);
     }
   };
 

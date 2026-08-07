@@ -1,35 +1,32 @@
-import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
-import { db } from './firebase';
 import confetti from 'canvas-confetti';
 import { toast } from './toast';
+import { api } from './api';
 
 export interface LockedMovie {
   tmdbId: number;
   mediaType?: 'movie' | 'tv';
   title?: string;
   isLocked: boolean;
-  lockedUntil?: number | null; // Epoch timestamp ms
+  lockedUntil?: number | null;
   reason?: string;
   lockedBy?: string;
   updatedAt: number;
 }
 
-const STORAGE_KEY = 'moviebox_locked_movies_v2';
 type LockListener = (locks: Record<number, LockedMovie>) => void;
 
 class LockStore {
   private locks: Record<number, LockedMovie> = {};
   private listeners: Set<LockListener> = new Set();
-  private docRef = doc(db, 'config', 'locked_movies');
 
   constructor() {
     this.loadFromStorage();
-    this.initFirestoreListener();
+    this.initBackendSync();
   }
 
   private loadFromStorage() {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem('moviebox_locked_movies_v2');
       if (stored) {
         this.locks = JSON.parse(stored);
       }
@@ -38,39 +35,37 @@ class LockStore {
 
   private saveToStorage() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.locks));
+      localStorage.setItem('moviebox_locked_movies_v2', JSON.stringify(this.locks));
     } catch {}
   }
 
-  private initFirestoreListener() {
+  private async initBackendSync() {
+    await this.syncFromBackend();
+    setInterval(() => {
+      this.syncFromBackend();
+    }, 30000);
+  }
+
+  private async syncFromBackend() {
     try {
-      onSnapshot(this.docRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          if (data && data.locks) {
-            this.locks = data.locks;
-            this.saveToStorage();
-            this.notify();
-          }
-        } else {
-          // Auto-initialize document in Firestore if it doesn't exist
-          setDoc(this.docRef, { locks: this.locks, lastUpdated: Date.now() }, { merge: true }).catch(() => {});
-        }
-      }, (err) => {
-        console.warn('Firestore locks snapshot warning:', err);
-      });
+      const data = await api.getLocks();
+      if (data && data.locks) {
+        this.locks = data.locks;
+        this.saveToStorage();
+        this.notify();
+      }
     } catch (e) {
-      console.warn('Could not initialize Firestore locks listener', e);
+      console.warn('Failed to sync locks from backend:', e);
     }
   }
 
-  private async syncToFirestore() {
+  private async syncToBackend() {
     this.saveToStorage();
     this.notify();
     try {
-      await setDoc(this.docRef, { locks: this.locks, lastUpdated: Date.now() }, { merge: true });
+      await api.setLock({ locks: this.locks, lastUpdated: Date.now() });
     } catch (e) {
-      console.warn('Firestore lock write failed (saving locally)', e);
+      console.warn('Backend lock write failed (saving locally)', e);
     }
   }
 
@@ -90,9 +85,7 @@ class LockStore {
       return { isLocked: false };
     }
 
-    // Check if timed lock expired
     if (item.lockedUntil && Date.now() >= item.lockedUntil) {
-      // Auto unlock and trigger confetti!
       this.unlockMovie(tmdbId, true);
       return { isLocked: false };
     }
@@ -105,10 +98,10 @@ class LockStore {
   }
 
   public async lockMovie(
-    tmdbId: number, 
-    mediaType: 'movie' | 'tv' = 'movie', 
-    title?: string, 
-    durationMinutes?: number, 
+    tmdbId: number,
+    mediaType: 'movie' | 'tv' = 'movie',
+    title?: string,
+    durationMinutes?: number,
     reason: string = 'Exclusive Owner Lock'
   ) {
     const lockedUntil = durationMinutes && durationMinutes > 0 ? Date.now() + durationMinutes * 60 * 1000 : null;
@@ -123,22 +116,20 @@ class LockStore {
       updatedAt: Date.now(),
     };
 
-    await this.syncToFirestore();
-    toast.error(`Locked TMDB ID ${tmdbId} ${durationMinutes ? `for ${durationMinutes} mins` : 'indefinitely'}`);
+    await this.syncToBackend();
+    toast.error('Locked TMDB ID ' + tmdbId + (durationMinutes ? ` for ${durationMinutes} mins` : ' indefinitely'));
   }
 
   public async unlockMovie(tmdbId: number, isAutoUnlock: boolean = false) {
     if (this.locks[tmdbId]) {
       this.locks[tmdbId].isLocked = false;
-      await this.syncToFirestore();
-
-      // Trigger Confetti!
+      await this.syncToBackend();
       this.triggerConfetti();
 
       if (isAutoUnlock) {
-        toast.success(`🎉 Lock expired! "${this.locks[tmdbId].title || tmdbId}" is now UNLOCKED!`);
+        toast.success('Lock expired! ' + (this.locks[tmdbId].title || tmdbId) + ' is now UNLOCKED!');
       } else {
-        toast.success(`🎉 Unlocked "${this.locks[tmdbId].title || tmdbId}"! Confetti released!`);
+        toast.success('Unlocked ' + (this.locks[tmdbId].title || tmdbId) + '! Confetti released!');
       }
     }
   }
@@ -149,7 +140,6 @@ class LockStore {
 
   public triggerConfetti() {
     try {
-      // First burst
       confetti({
         particleCount: 100,
         spread: 70,
@@ -157,7 +147,6 @@ class LockStore {
         colors: ['#00d2ff', '#7b2cbf', '#ec4899', '#ffffff', '#ffd700'],
       });
 
-      // Side cannons after 200ms
       setTimeout(() => {
         confetti({
           particleCount: 50,

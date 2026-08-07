@@ -49,9 +49,9 @@ export const OwnerLockManagerModal: React.FC<OwnerLockManagerModalProps> = ({ is
       if (success) {
         setIsAdmin(true);
         setPasscode('');
-        toast.success('👑 Welcome Owner! Secret Admin Unlocked.');
+        toast.success('Welcome Owner! Secret Admin Unlocked.');
       } else {
-        toast.error('❌ Invalid passcode! Access denied.');
+        toast.error('Invalid passcode! Access denied.');
       }
     } catch (err) {
       toast.error('Verification error');
@@ -104,7 +104,7 @@ export const OwnerLockManagerModal: React.FC<OwnerLockManagerModalProps> = ({ is
 
   const handleTriggerTestConfetti = () => {
     lockStore.triggerConfetti();
-    toast.success('🎉 Confetti test released!');
+    toast.success('Confetti test released!');
   };
 
   if (!isOpen) return null;
@@ -321,7 +321,7 @@ export const OwnerLockManagerModal: React.FC<OwnerLockManagerModalProps> = ({ is
                       >
                         <div className="space-y-0.5">
                           <div className="font-bold text-white text-xs flex items-center gap-2">
-                            <span className="text-rose-400">🔒 {item.title || `TMDB ID #${item.tmdbId}`}</span>
+                            <span className="text-rose-400">[LOCKED] {item.title || 'TMDB ID #' + item.tmdbId}</span>
                             <span className="px-1.5 py-0.2 rounded bg-white/10 text-[10px] text-white/60 font-mono">
                               ID: {item.tmdbId}
                             </span>

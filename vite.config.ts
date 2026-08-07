@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   return {
@@ -12,11 +12,42 @@ export default defineConfig(() => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
+    },
+    build: {
+      outDir: 'dist',
+      assetsDir: 'assets',
+      minify: 'esbuild',
+      sourcemap: false,
+      rollupOptions: {
+        output: {
+          entryFileNames: 'assets/app.[hash].js',
+          chunkFileNames: 'assets/[name].[hash].js',
+          assetFileNames: (assetInfo) => {
+            if (assetInfo.name?.endsWith('.css')) {
+              return 'assets/style.[hash].css';
+            }
+            return 'assets/[name].[hash].[ext]';
+          },
+          manualChunks: {
+            'vendor': ['react', 'react-dom'],
+            'lucide': ['lucide-react'],
+          },
+        },
+      },
+      esbuild: {
+        drop: ['console', 'debugger'],
+        pure: ['console.log'],
+        mangleProps: /^_/,
+        mangleQuoted: true,
+        mangleSuffix: 'mb',
+        dropLabels: true,
+        treeShaking: true,
+      },
+    },
+    define: {
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version || '2.0.0'),
     },
   };
 });
