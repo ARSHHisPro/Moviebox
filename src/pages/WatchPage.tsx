@@ -22,14 +22,13 @@ interface WatchPageProps {
 export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenTrailer }) => {
   const queryParams = new URLSearchParams(route.split('?')[1] || '');
   const type: MediaType = (queryParams.get('type') as MediaType) || 'movie';
-  const id = Number(queryParams.get('id')) || 550; // Fallback ID
+  const id = Number(queryParams.get('id')) || 550;
   const season = Number(queryParams.get('s')) || 1;
   const episode = Number(queryParams.get('e')) || 1;
 
   const [details, setDetails] = useState<MediaDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Modals state
   const [watchPartyOpen, setWatchPartyOpen] = useState(false);
   const [vipTicketOpen, setVipTicketOpen] = useState(false);
   const [playlistOpen, setPlaylistOpen] = useState(false);
@@ -45,7 +44,7 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
         setDetails(res);
         setIsFav(favoritesStore.isFavorite(res.id, type));
       } catch (err) {
-        console.error('Failed to load media details', err);
+        
       } finally {
         setLoading(false);
       }
@@ -86,8 +85,7 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-      
-      {/* Video Streaming Player */}
+
       <Player
         media={details}
         type={type}
@@ -96,12 +94,10 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
         onBack={() => onNavigate('home')}
       />
 
-      {/* Media Details Summary Bar */}
       <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6">
         <div className="flex flex-col md:flex-row items-start justify-between gap-6">
           <div className="space-y-3 flex-1">
-            
-            {/* Badges */}
+
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[var(--color-primary)] text-black">
                 {type === 'movie' ? 'Movie' : 'TV Series'}
@@ -126,16 +122,13 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
               )}
             </div>
 
-            {/* Title & Tagline */}
             <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">{title}</h1>
             {details.tagline && (
               <p className="text-sm font-semibold text-[var(--color-primary)] italic">"{details.tagline}"</p>
             )}
 
-            {/* Overview */}
             <p className="text-sm text-slate-300 leading-relaxed max-w-4xl">{details.overview}</p>
 
-            {/* Genres */}
             {details.genres && details.genres.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 pt-2">
                 <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mr-1">Genres:</span>
@@ -152,7 +145,6 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
             )}
           </div>
 
-          {/* Action Buttons Toolbar */}
           <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0 pt-2">
             <button
               onClick={handleToggleFav}
@@ -205,7 +197,6 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
           </div>
         </div>
 
-        {/* Cast Carousel */}
         {details.credits?.cast && details.credits.cast.length > 0 && (
           <div className="pt-6 border-t border-white/10">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4">Top Cast</h3>
@@ -232,7 +223,6 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
         )}
       </div>
 
-      {/* Similar Titles */}
       {similarItems.length > 0 && (
         <Carousel title="More Like This" subtitle="Similar recommendations" icon={Film}>
           {similarItems.slice(0, 15).map((item) => (
@@ -245,7 +235,6 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
         </Carousel>
       )}
 
-      {/* Cinephile Modals */}
       <WatchPartyModal
         isOpen={watchPartyOpen}
         onClose={() => setWatchPartyOpen(false)}

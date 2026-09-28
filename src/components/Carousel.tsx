@@ -24,7 +24,7 @@ export const Carousel: React.FC<CarouselProps> = ({ title, subtitle, icon: Icon,
 
   return (
     <section className="relative my-8">
-      {/* Header */}
+      
       <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 mb-5">
         <div>
           <div className="flex items-center gap-3">
@@ -58,7 +58,6 @@ export const Carousel: React.FC<CarouselProps> = ({ title, subtitle, icon: Icon,
         </div>
       </div>
 
-      {/* Slider Container */}
       <div
         ref={containerRef}
         className="flex gap-4 overflow-x-auto scrollbar-none px-4 sm:px-6 lg:px-8 py-2 scroll-smooth"

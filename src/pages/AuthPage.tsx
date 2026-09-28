@@ -37,7 +37,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate, onSuccess }) => 
         onNavigate('home');
       }
     } catch (err: any) {
-      console.error(err);
+      
       const msg = err.message || 'Authentication failed. Please check credentials.';
       if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password')) {
         toast.error('Invalid email or password');
@@ -64,7 +64,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate, onSuccess }) => 
         onNavigate('home');
       }
     } catch (err: any) {
-      console.error(err);
+      
       if (err.code !== 'auth/popup-closed-by-user') {
         toast.error(err.message || 'Google Sign-In failed');
       }
@@ -77,8 +77,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate, onSuccess }) => 
     <div className="space-y-6">
       <div className="max-w-md mx-auto my-8 px-4">
         <div className="glass-panel p-8 rounded-3xl border border-white/20 shadow-2xl space-y-6 bg-black/90">
-          
-          {/* Logo Header */}
+
           <div className="text-center space-y-2">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[var(--color-secondary)] to-[#00d2ff] p-0.5 mx-auto flex items-center justify-center shadow-lg shadow-[#00d2ff]/30">
               <div className="w-full h-full bg-black rounded-[14px] flex items-center justify-center">
@@ -91,7 +90,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate, onSuccess }) => 
             </p>
           </div>
 
-          {/* Tab Switcher */}
           <div className="flex items-center p-1 bg-white/5 rounded-2xl border border-white/10 text-xs">
             <button
               type="button"
@@ -113,7 +111,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate, onSuccess }) => 
             </button>
           </div>
 
-          {/* Google Sign In Button */}
           <button
             type="button"
             onClick={handleGoogleLogin}

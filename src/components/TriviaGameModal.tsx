@@ -76,7 +76,7 @@ export const TriviaGameModal: React.FC<TriviaGameModalProps> = ({ isOpen, onClos
         setSelectedOpt(null);
       } else {
         setIsFinished(true);
-        // Submit score to Firestore
+
         submitTriviaScore({
           userId: 'ctrlquest18',
           username: 'ctrlquest18',
@@ -103,8 +103,7 @@ export const TriviaGameModal: React.FC<TriviaGameModalProps> = ({ isOpen, onClos
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl glass-panel border border-amber-500/40 rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
-        
-        {/* Header */}
+
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center">
@@ -126,7 +125,6 @@ export const TriviaGameModal: React.FC<TriviaGameModalProps> = ({ isOpen, onClos
           </button>
         </div>
 
-        {/* Quiz Body */}
         {!isFinished ? (
           <div className="p-6 space-y-6">
             <div className="flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-wider">
@@ -176,7 +174,6 @@ export const TriviaGameModal: React.FC<TriviaGameModalProps> = ({ isOpen, onClos
               <p className="text-xs text-slate-400 mt-1">Final Score: <span className="font-bold text-amber-400 text-lg">{score} PTS</span></p>
             </div>
 
-            {/* Leaderboard Table */}
             <div className="p-4 rounded-2xl bg-black/50 border border-white/10 text-left space-y-3">
               <h4 className="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5 text-amber-400" /> Firestore Hall of Fame

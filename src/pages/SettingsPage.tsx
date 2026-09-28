@@ -32,8 +32,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
-      {/* Header */}
+
       <div className="pb-6 border-b border-white/10">
         <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">
           <Settings className="w-4 h-4" /> Preferences
@@ -42,7 +41,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
         <p className="text-xs text-slate-400 mt-0.5">Customize theme themes, default streaming servers, and playback behavior</p>
       </div>
 
-      {/* Theme Picker */}
       <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
         <h3 className="text-base font-bold text-white flex items-center gap-2">
           <Palette className="w-5 h-5 text-[var(--color-primary)]" /> Aurora Glass Themes
@@ -70,7 +68,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                   )}
                 </div>
 
-                {/* Color swatches preview */}
                 <div className="flex items-center gap-1.5 z-10">
                   <span className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: t.primary }} />
                   <span className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: t.secondary }} />
@@ -82,7 +79,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Player Preferences */}
       <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
         <h3 className="text-base font-bold text-white flex items-center gap-2">
           <Tv className="w-5 h-5 text-[var(--color-primary)]" /> Streaming Player Preferences
@@ -121,7 +117,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Local Storage & Cache */}
       <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
         <h3 className="text-base font-bold text-white flex items-center gap-2">
           <HardDrive className="w-5 h-5 text-rose-400" /> Data & Cache Management

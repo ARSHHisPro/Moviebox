@@ -31,13 +31,11 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
     <>
       <footer className="mt-20 border-t border-white/10 bg-black/80 backdrop-blur-2xl relative overflow-hidden">
-        
-        {/* Background Glow Effect */}
+
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-gradient-to-r from-purple-600/10 via-[#00d2ff]/15 to-pink-600/10 blur-3xl pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          
-          {/* PROMINENT OWNER CREDITS BADGE */}
+
           <div 
             id="owner-footer-badge"
             className={`my-6 p-6 rounded-3xl border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 ${
@@ -46,10 +44,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 : 'bg-white/5 border-white/10 hover:border-[#00d2ff]/40'
             }`}
           >
-            {/* Left: Crown + Made by Arshh */}
+            
             <div className="flex items-center gap-4 text-center sm:text-left">
               <div className="relative flex flex-col items-center justify-center">
-                {/* Jumping Crown Above */}
+                
                 <Crown className="w-7 h-7 text-amber-400 animate-bounce drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]" />
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-[#00d2ff] p-0.5 mt-1 shadow-lg shadow-[#00d2ff]/30">
                   <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
@@ -69,7 +67,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            {/* Right: Instagram Button */}
             <a
               href="https://www.instagram.com/arshhispro_/"
               target="_blank"
@@ -84,8 +81,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 my-10">
-            
-            {/* Column 1: Brand */}
+
             <div className="space-y-4">
               <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('home')}>
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-[#00d2ff] p-0.5 flex items-center justify-center">
@@ -100,7 +96,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </p>
             </div>
 
-            {/* Column 2: Browse */}
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">Browse Content</h4>
               <ul className="space-y-2 text-xs text-slate-400">
@@ -122,7 +117,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </ul>
             </div>
 
-            {/* Column 3: Personal */}
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">Your Library</h4>
               <ul className="space-y-2 text-xs text-slate-400">
@@ -144,7 +138,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </ul>
             </div>
 
-            {/* Column 4: Platform Status */}
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-2">Platform Status</h4>
               <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs text-slate-300 space-y-1.5">
@@ -162,7 +155,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Bottom Bar */}
           <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <div>© {new Date().getFullYear()} MovieBox. Personal Streaming Project by Arshh.</div>
             <div className="flex items-center gap-4 sm:gap-6">
@@ -179,7 +171,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* VERY LAST ITEM AT THE BOTTOM OF THE PAGE: HIDDEN SECRET ADMIN LINK */}
           <div className="mt-8 pt-4 border-t border-white/5 flex justify-center items-center">
             <button
               onClick={() => setShowAdminModal(true)}
@@ -194,7 +185,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         </div>
       </footer>
 
-      {/* Secret Owner Admin Lock Manager Modal */}
       <OwnerLockManagerModal isOpen={showAdminModal} onClose={() => setShowAdminModal(false)} />
     </>
   );

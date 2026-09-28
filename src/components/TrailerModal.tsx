@@ -14,8 +14,7 @@ export const TrailerModal: React.FC<TrailerModalProps> = ({ isOpen, videoKey, ti
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="relative w-full max-w-4xl glass-panel border border-white/20 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
-        
-        {/* Header */}
+
         <div className="p-4 border-b border-white/10 flex items-center justify-between bg-black/60">
           <div className="flex items-center gap-2">
             <Play className="w-4 h-4 text-[var(--color-primary)] fill-current" />
@@ -29,7 +28,6 @@ export const TrailerModal: React.FC<TrailerModalProps> = ({ isOpen, videoKey, ti
           </button>
         </div>
 
-        {/* Video Player Box */}
         <div className="relative aspect-video w-full bg-black">
           {videoKey ? (
             <iframe

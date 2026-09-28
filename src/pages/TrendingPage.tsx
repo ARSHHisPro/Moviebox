@@ -21,7 +21,7 @@ export const TrendingPage: React.FC<TrendingPageProps> = ({ onNavigate }) => {
         const res = await tmdb.getTrending(mediaType, timeWindow);
         setItems(res.results || []);
       } catch (err) {
-        console.error(err);
+        
       } finally {
         setLoading(false);
       }
@@ -41,7 +41,7 @@ export const TrendingPage: React.FC<TrendingPageProps> = ({ onNavigate }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Time Window Switcher */}
+          
           <div className="flex items-center gap-1 p-1 glass-panel rounded-xl">
             <button
               onClick={() => setTimeWindow('day')}
@@ -61,7 +61,6 @@ export const TrendingPage: React.FC<TrendingPageProps> = ({ onNavigate }) => {
             </button>
           </div>
 
-          {/* Type Filter */}
           <div className="flex items-center gap-1 p-1 glass-panel rounded-xl">
             {(['all', 'movie', 'tv'] as const).map((t) => (
               <button

@@ -94,8 +94,7 @@ export const Player: React.FC<PlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  
-  // Auth Form State inside Player lock screen
+
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -107,7 +106,6 @@ export const Player: React.FC<PlayerProps> = ({
 
   const title = media.title || media.name || 'Untitled';
 
-  // Listen for user auth & lock store changes
   useEffect(() => {
     const unsubAuth = auth.subscribe((usr) => setCurrentUser(usr));
     const unsubLock = lockStore.subscribe(() => setLockStatus(lockStore.isMovieLocked(media.id)));
@@ -117,13 +115,11 @@ export const Player: React.FC<PlayerProps> = ({
     };
   }, [media.id]);
 
-  // Check stored continueWatching last position
   const savedProgress = continueWatchingStore.getById(media.id, type, season, episode);
   const resumeSeconds = savedProgress?.lastPosition || 0;
   const playStartTimeRef = useRef(Date.now());
   const [currentResumePosition, setCurrentResumePosition] = useState(resumeSeconds);
 
-  // Update resume position every 15 seconds based on elapsed time
   useEffect(() => {
     if (!currentUser) return;
 
@@ -148,13 +144,11 @@ export const Player: React.FC<PlayerProps> = ({
     return () => clearInterval(interval);
   }, [currentUser, media.id, type, season, episode, title, resumeSeconds, media.poster_path, media.backdrop_path]);
 
-  // Reset play start time when media changes
   useEffect(() => {
     playStartTimeRef.current = Date.now();
     setCurrentResumePosition(resumeSeconds);
   }, [media.id, type, season, episode]);
 
-  // Build current embed URL
   const getEmbedUrl = () => {
     const server = SERVERS[selectedServer] || SERVERS[0];
     const resumeAt = Math.floor(currentResumePosition);
@@ -170,7 +164,6 @@ export const Player: React.FC<PlayerProps> = ({
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  // Auth Handler inside Lock Screen
   const handleInlineAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
@@ -188,7 +181,7 @@ export const Player: React.FC<PlayerProps> = ({
         toast.success('Signed in successfully! Unlocking stream...');
       }
     } catch (err: any) {
-      console.error(err);
+      
       toast.error(err.message || 'Authentication failed');
     } finally {
       setAuthLoading(false);
@@ -201,7 +194,7 @@ export const Player: React.FC<PlayerProps> = ({
       const user = await signInWithGoogle();
       toast.success(`Welcome ${user.username}! Unlocking stream...`);
     } catch (err: any) {
-      console.error(err);
+      
       if (err.code !== 'auth/popup-closed-by-user') {
         toast.error(err.message || 'Google sign in failed');
       }
@@ -237,11 +230,10 @@ export const Player: React.FC<PlayerProps> = ({
     }
   };
 
-  // IF MOVIE IS LOCKED BY OWNER: Block Playback
   if (lockStatus.isLocked) {
     return (
       <div className="relative w-full h-[85vh] min-h-[520px] max-h-[900px] bg-gradient-to-b from-slate-950 via-black to-slate-950 rounded-3xl overflow-hidden border border-rose-500/40 shadow-2xl flex flex-col items-center justify-center p-6 text-center select-none">
-        {/* Backdrop poster with blur */}
+        
         {media.backdrop_path && (
           <img
             src={`https://image.tmdb.org/t/p/w1280${media.backdrop_path}`}
@@ -251,7 +243,7 @@ export const Player: React.FC<PlayerProps> = ({
         )}
 
         <div className="relative z-10 max-w-md w-full glass-panel p-8 rounded-3xl border border-rose-500/50 bg-black/90 shadow-2xl space-y-5">
-          {/* Lock Icon Header */}
+          
           <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-rose-600 via-amber-500 to-rose-700 p-0.5 mx-auto flex items-center justify-center shadow-xl shadow-rose-500/40 animate-bounce">
             <div className="w-full h-full bg-slate-950 rounded-[22px] flex items-center justify-center">
               <Lock className="w-8 h-8 text-rose-500" />
@@ -283,11 +275,10 @@ export const Player: React.FC<PlayerProps> = ({
     );
   }
 
-  // IF USER NOT SIGNED IN: Show Locked Player Screen
   if (!currentUser) {
     return (
       <div className="relative w-full h-[85vh] min-h-[520px] max-h-[900px] bg-gradient-to-b from-slate-950 via-black to-slate-950 rounded-3xl overflow-hidden border border-white/10 shadow-2xl flex flex-col items-center justify-center p-6 text-center select-none">
-        {/* Backdrop poster with blur */}
+        
         {media.backdrop_path && (
           <img
             src={`https://image.tmdb.org/t/p/w1280${media.backdrop_path}`}
@@ -297,7 +288,7 @@ export const Player: React.FC<PlayerProps> = ({
         )}
 
         <div className="relative z-10 max-w-md w-full glass-panel p-8 rounded-3xl border border-white/15 bg-black/85 shadow-2xl space-y-5">
-          {/* Lock Icon Header */}
+          
           <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-rose-500 to-[#00d2ff] p-0.5 mx-auto flex items-center justify-center shadow-xl shadow-[#00d2ff]/20">
             <div className="w-full h-full bg-slate-950 rounded-[22px] flex items-center justify-center">
               <Lock className="w-8 h-8 text-[#00d2ff] animate-pulse" />
@@ -314,7 +305,6 @@ export const Player: React.FC<PlayerProps> = ({
             </p>
           </div>
 
-          {/* Quick Google Sign In */}
           <button
             type="button"
             onClick={handleGoogleSignIn}
@@ -331,7 +321,6 @@ export const Player: React.FC<PlayerProps> = ({
             <div className="flex-grow border-t border-white/10"></div>
           </div>
 
-          {/* Inline Email Auth Form */}
           <form onSubmit={handleInlineAuthSubmit} className="space-y-3 text-left">
             {authMode === 'signup' && (
               <div>
@@ -390,7 +379,6 @@ export const Player: React.FC<PlayerProps> = ({
             </button>
           </form>
 
-          {/* Toggle mode */}
           <div className="text-center pt-2">
             <button
               type="button"
@@ -405,14 +393,13 @@ export const Player: React.FC<PlayerProps> = ({
     );
   }
 
-  // SIGNED IN USER PLAYER
   return (
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
       className="relative w-full h-[85vh] min-h-[500px] max-h-[900px] bg-black rounded-3xl overflow-hidden glass-panel border border-white/10 shadow-2xl flex flex-col group select-none"
     >
-      {/* Top Controls Overlay */}
+      
       <div
         className={`absolute top-0 left-0 right-0 z-30 p-4 bg-gradient-to-b from-black/95 via-black/50 to-transparent flex items-center justify-between transition-opacity duration-300 ${
           showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -436,7 +423,7 @@ export const Player: React.FC<PlayerProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Server Selector */}
+          
           <div className="relative">
             <select
               value={selectedServer}
@@ -451,7 +438,6 @@ export const Player: React.FC<PlayerProps> = ({
             </select>
           </div>
 
-          {/* Open Direct Stream / External Player Link to bypass sandboxed iframe restrictions */}
           <button
             onClick={handleOpenDirectStream}
             className="p-2 rounded-full bg-[#00d2ff]/20 hover:bg-[#00d2ff]/30 text-[#00d2ff] border border-[#00d2ff]/40 backdrop-blur-md transition-all flex items-center gap-1.5 px-3 text-xs font-bold cursor-pointer"
@@ -461,7 +447,6 @@ export const Player: React.FC<PlayerProps> = ({
             <span className="hidden sm:inline">Direct Tab</span>
           </button>
 
-          {/* Next Episode Button for TV */}
           {type === 'tv' && (
             <button
               onClick={handleNextEpisode}
@@ -473,7 +458,6 @@ export const Player: React.FC<PlayerProps> = ({
             </button>
           )}
 
-          {/* Episode Drawer Trigger */}
           {type === 'tv' && (
             <button
               onClick={() => setShowEpisodeDrawer(!showEpisodeDrawer)}
@@ -494,7 +478,6 @@ export const Player: React.FC<PlayerProps> = ({
         </div>
       </div>
 
-      {/* Main Video Iframe */}
       <div className="relative flex-1 w-full h-full bg-slate-950">
         <iframe
           key={`${selectedServer}-${media.id}-${type}-${season}-${episode}`}
@@ -507,7 +490,6 @@ export const Player: React.FC<PlayerProps> = ({
         />
       </div>
 
-      {/* Side Panel Drawer for TV Seasons & Episodes */}
       {showEpisodeDrawer && type === 'tv' && (
         <div className="absolute right-0 top-0 bottom-0 w-80 bg-slate-950/95 backdrop-blur-2xl border-l border-white/10 z-40 p-4 flex flex-col animate-in slide-in-from-right duration-200">
           <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
@@ -520,7 +502,6 @@ export const Player: React.FC<PlayerProps> = ({
             </button>
           </div>
 
-          {/* Season Selector */}
           {media.seasons && media.seasons.length > 0 && (
             <div className="mb-3">
               <label className="text-[11px] uppercase tracking-wider text-slate-400 block mb-1 font-bold">
@@ -545,7 +526,6 @@ export const Player: React.FC<PlayerProps> = ({
             </div>
           )}
 
-          {/* Episodes List */}
           <div className="flex-1 overflow-y-auto space-y-2 pr-1">
             {episodesList.map((ep) => {
               const isCurrent = ep.episode_number === episode;

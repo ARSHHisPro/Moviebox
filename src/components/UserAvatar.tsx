@@ -35,7 +35,6 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
     );
   }
 
-  // Default Letter PFP Avatar with animated gradient & glow
   return (
     <div
       className={`${sizeClasses} rounded-full bg-gradient-to-tr from-[#7b2cbf] via-[#00d2ff] to-[#ec4899] p-0.5 shadow-lg shadow-[#00d2ff]/20 flex-shrink-0 flex items-center justify-center ${className}`}

@@ -37,7 +37,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       if (onSuccess) onSuccess();
       onClose();
     } catch (err: any) {
-      console.error(err);
+      
       const msg = err.message || 'Authentication failed. Please check credentials.';
       if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password')) {
         toast.error('Invalid email or password');
@@ -61,7 +61,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       if (onSuccess) onSuccess();
       onClose();
     } catch (err: any) {
-      console.error(err);
+      
       if (err.code !== 'auth/popup-closed-by-user') {
         toast.error(err.message || 'Google Sign-In failed');
       }
@@ -73,8 +73,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-md glass-panel p-6 sm:p-8 rounded-3xl border border-white/20 shadow-2xl bg-slate-950/95 text-white">
-        
-        {/* Close Button */}
+
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all cursor-pointer"
@@ -83,7 +82,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <X className="w-5 h-5" />
         </button>
 
-        {/* Logo Header */}
         <div className="text-center space-y-2 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#7b2cbf] to-[#00d2ff] p-0.5 mx-auto flex items-center justify-center shadow-lg shadow-[#00d2ff]/30">
             <div className="w-full h-full bg-black rounded-[14px] flex items-center justify-center">
@@ -96,7 +94,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </p>
         </div>
 
-        {/* Tab Switcher */}
         <div className="flex items-center p-1 bg-white/5 rounded-2xl border border-white/10 text-xs mb-6">
           <button
             type="button"
@@ -118,7 +115,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </button>
         </div>
 
-        {/* Google Quick Login */}
         <button
           type="button"
           onClick={handleGoogleLogin}
@@ -136,7 +132,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </span>
         </div>
 
-        {/* Auth Form */}
         <form onSubmit={handleSubmit} className="space-y-3">
           {isSignUp && (
             <div>

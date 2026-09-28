@@ -30,13 +30,17 @@ class LockStore {
       if (stored) {
         this.locks = JSON.parse(stored);
       }
-    } catch {}
+    } catch {
+
+    }
   }
 
   private saveToStorage() {
     try {
       localStorage.setItem('moviebox_locked_movies_v2', JSON.stringify(this.locks));
-    } catch {}
+    } catch {
+
+    }
   }
 
   private async initBackendSync() {
@@ -54,8 +58,8 @@ class LockStore {
         this.saveToStorage();
         this.notify();
       }
-    } catch (e) {
-      console.warn('Failed to sync locks from backend:', e);
+    } catch {
+
     }
   }
 
@@ -64,8 +68,8 @@ class LockStore {
     this.notify();
     try {
       await api.setLock({ locks: this.locks, lastUpdated: Date.now() });
-    } catch (e) {
-      console.warn('Backend lock write failed (saving locally)', e);
+    } catch {
+
     }
   }
 
@@ -163,8 +167,8 @@ class LockStore {
           colors: ['#ec4899', '#7b2cbf'],
         });
       }, 200);
-    } catch (e) {
-      console.warn('Confetti trigger error:', e);
+    } catch {
+
     }
   }
 }

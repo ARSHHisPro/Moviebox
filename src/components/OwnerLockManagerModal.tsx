@@ -19,10 +19,9 @@ export const OwnerLockManagerModal: React.FC<OwnerLockManagerModalProps> = ({ is
   const [tmdbIdInput, setTmdbIdInput] = useState('');
   const [mediaType, setMediaType] = useState<'movie' | 'tv'>('movie');
   const [reason, setReason] = useState('Exclusive Owner Lock');
-  const [durationMins, setDurationMins] = useState<number>(0); // 0 = indefinite
+  const [durationMins, setDurationMins] = useState<number>(0);
   const [isLocking, setIsLocking] = useState(false);
 
-  // Quick TMDB search
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
@@ -114,8 +113,7 @@ export const OwnerLockManagerModal: React.FC<OwnerLockManagerModalProps> = ({ is
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl bg-slate-950 rounded-3xl border border-white/15 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        
-        {/* Header */}
+
         <div className="p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-purple-900/40 via-slate-950 to-cyan-900/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 to-[#00d2ff] p-0.5 flex items-center justify-center shadow-lg shadow-[#00d2ff]/20">
@@ -151,10 +149,8 @@ export const OwnerLockManagerModal: React.FC<OwnerLockManagerModalProps> = ({ is
           </div>
         </div>
 
-        {/* Content Body */}
         <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
-          
-          {/* IF NOT ADMIN: SHOW PASSCODE PROMPT */}
+
           {!isAdmin ? (
             <div className="p-8 rounded-3xl bg-white/5 border border-white/10 text-center space-y-5 my-4">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-[#00d2ff] p-0.5 mx-auto flex items-center justify-center shadow-xl shadow-amber-500/20">
@@ -191,15 +187,14 @@ export const OwnerLockManagerModal: React.FC<OwnerLockManagerModalProps> = ({ is
               </form>
             </div>
           ) : (
-            /* IF ADMIN: SHOW FULL LOCK CONTROLS */
+            
             <>
-              {/* Lock Creator Form */}
+              
               <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-4">
                 <h3 className="font-bold text-white text-sm flex items-center gap-2">
                   <ShieldAlert className="w-4 h-4 text-amber-400" /> Lock New Content by TMDB ID
                 </h3>
 
-                {/* Quick Search Helper */}
                 <form onSubmit={handleSearch} className="flex gap-2">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
@@ -219,7 +214,6 @@ export const OwnerLockManagerModal: React.FC<OwnerLockManagerModalProps> = ({ is
                   </button>
                 </form>
 
-                {/* Search Results Dropdown */}
                 {searchResults.length > 0 && (
                   <div className="space-y-1 bg-black/80 p-2 rounded-xl border border-white/10">
                     {searchResults.map((item) => (
@@ -301,7 +295,6 @@ export const OwnerLockManagerModal: React.FC<OwnerLockManagerModalProps> = ({ is
                 </form>
               </div>
 
-              {/* Active Locks List */}
               <div className="space-y-3">
                 <h3 className="font-bold text-white text-sm flex items-center justify-between">
                   <span>Active Firestore Locks ({activeLocks.length})</span>

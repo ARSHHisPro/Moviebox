@@ -68,8 +68,7 @@ export const CommunityReviewsModal: React.FC<CommunityReviewsModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl glass-panel border border-[var(--color-primary)]/40 rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
-        
-        {/* Header */}
+
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
@@ -89,13 +88,12 @@ export const CommunityReviewsModal: React.FC<CommunityReviewsModalProps> = ({
         </div>
 
         <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-          {/* Post Review Form */}
+          
           <form onSubmit={handleSubmitReview} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
             <h3 className="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
               <MessageSquare className="w-4 h-4 text-[var(--color-primary)]" /> Write Your Review
             </h3>
 
-            {/* Rating Stars */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400 font-bold">Your Rating:</span>
               <div className="flex gap-1">
@@ -136,7 +134,6 @@ export const CommunityReviewsModal: React.FC<CommunityReviewsModalProps> = ({
             </button>
           </form>
 
-          {/* Reviews List */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
               Recent Reviews ({reviews.length})

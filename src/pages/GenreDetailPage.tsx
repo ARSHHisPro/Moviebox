@@ -29,7 +29,7 @@ export const GenreDetailPage: React.FC<GenreDetailPageProps> = ({ route, onNavig
         setItems(res.results || []);
         setTotalPages(Math.min(res.total_pages || 1, 200));
       } catch (err) {
-        console.error(err);
+        
       } finally {
         setLoading(false);
       }

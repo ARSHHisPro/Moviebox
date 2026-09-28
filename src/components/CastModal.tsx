@@ -32,7 +32,7 @@ export const CastModal: React.FC<CastModalProps> = ({
       const data = await tmdb.getPersonDetails(personId);
       setPerson(data);
     } catch (e) {
-      console.warn('Cast details fetch warning:', e);
+      
     } finally {
       setIsLoading(false);
     }
@@ -43,8 +43,7 @@ export const CastModal: React.FC<CastModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl glass-panel border border-purple-500/30 rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
-        
-        {/* Header */}
+
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center">
@@ -63,7 +62,6 @@ export const CastModal: React.FC<CastModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         {isLoading ? (
           <div className="p-12 text-center text-xs text-slate-400">Loading artist profile...</div>
         ) : person ? (
@@ -104,7 +102,6 @@ export const CastModal: React.FC<CastModalProps> = ({
               </div>
             </div>
 
-            {/* Biography */}
             {person.biography && (
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
                 <h4 className="text-xs font-bold text-slate-300 uppercase tracking-widest">Biography</h4>
@@ -114,7 +111,6 @@ export const CastModal: React.FC<CastModalProps> = ({
               </div>
             )}
 
-            {/* Filmography */}
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
                 <Film className="w-4 h-4 text-purple-400" /> Known For

@@ -11,7 +11,7 @@ interface PersonPageProps {
 
 export const PersonPage: React.FC<PersonPageProps> = ({ route, onNavigate }) => {
   const queryParams = new URLSearchParams(route.split('?')[1] || '');
-  const personId = Number(queryParams.get('id')) || 1158; // Fallback Al Pacino ID
+  const personId = Number(queryParams.get('id')) || 1158;
 
   const [person, setPerson] = useState<Person | null>(null);
   const [activeTab, setActiveTab] = useState<'movies' | 'tv'>('movies');
@@ -24,7 +24,7 @@ export const PersonPage: React.FC<PersonPageProps> = ({ route, onNavigate }) => 
         const res = await tmdb.getPersonDetails(personId);
         setPerson(res);
       } catch (err) {
-        console.error(err);
+        
       } finally {
         setLoading(false);
       }
@@ -46,8 +46,7 @@ export const PersonPage: React.FC<PersonPageProps> = ({ route, onNavigate }) => 
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
-      {/* Profile Header Card */}
+
       <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 flex flex-col md:flex-row items-start gap-8">
         <img
           src={getProfileUrl(person.profile_path)}
@@ -85,7 +84,6 @@ export const PersonPage: React.FC<PersonPageProps> = ({ route, onNavigate }) => 
             {person.biography || 'No biography details available for this artist.'}
           </p>
 
-          {/* External Links */}
           {person.external_ids?.imdb_id && (
             <a
               href={`https://www.imdb.com/name/${person.external_ids.imdb_id}`}
@@ -99,7 +97,6 @@ export const PersonPage: React.FC<PersonPageProps> = ({ route, onNavigate }) => 
         </div>
       </div>
 
-      {/* Filmography Section */}
       <div className="space-y-6">
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <h2 className="text-xl font-bold text-white">Filmography</h2>

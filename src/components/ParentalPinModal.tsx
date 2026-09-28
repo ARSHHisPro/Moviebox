@@ -47,8 +47,7 @@ export const ParentalPinModal: React.FC<ParentalPinModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="relative w-full max-w-sm glass-panel border border-rose-500/40 rounded-3xl overflow-hidden flex flex-col shadow-2xl text-center">
-        
-        {/* Header */}
+
         <div className="p-4 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-rose-400" />

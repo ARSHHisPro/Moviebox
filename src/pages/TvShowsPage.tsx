@@ -35,7 +35,7 @@ export const TvShowsPage: React.FC<TvShowsPageProps> = ({ onNavigate }) => {
         setShows(res.results || []);
         setTotalPages(Math.min(res.total_pages || 1, 500));
       } catch (err) {
-        console.error('Error discovering TV shows', err);
+        
       } finally {
         setLoading(false);
       }
@@ -45,8 +45,7 @@ export const TvShowsPage: React.FC<TvShowsPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      
-      {/* Header Banner */}
+
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-white/10">
         <div>
           <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">
@@ -76,7 +75,6 @@ export const TvShowsPage: React.FC<TvShowsPageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Filter Bar */}
       <div className="glass-panel p-4 rounded-2xl border border-white/10 flex flex-wrap items-center gap-4 text-xs">
         <div className="flex items-center gap-2 text-slate-300 font-bold">
           <Filter className="w-4 h-4 text-[var(--color-primary)]" />
@@ -126,7 +124,6 @@ export const TvShowsPage: React.FC<TvShowsPageProps> = ({ onNavigate }) => {
         </select>
       </div>
 
-      {/* Show Grid */}
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {[...Array(10)].map((_, i) => (
@@ -149,7 +146,6 @@ export const TvShowsPage: React.FC<TvShowsPageProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Pagination Controls */}
       <div className="flex items-center justify-between pt-6 border-t border-white/10">
         <button
           disabled={page <= 1}

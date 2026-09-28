@@ -15,7 +15,6 @@ interface HeroBannerProps {
 export const HeroBanner: React.FC<HeroBannerProps> = ({ items, onPlay, onOpenTrailer, onOpenDetails }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Auto rotate hero items every 8 seconds
   useEffect(() => {
     if (items.length <= 1) return;
     const interval = setInterval(() => {
@@ -52,22 +51,20 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items, onPlay, onOpenTra
 
   return (
     <div className="relative w-full h-[500px] sm:h-[540px] rounded-[2.5rem] overflow-hidden flex items-end p-6 sm:p-10 shadow-2xl group border border-white/5 mb-10">
-      {/* Backdrop Image */}
+      
       <div className="absolute inset-0">
         <img
           src={getBackdropUrl(currentItem.backdrop_path)}
           alt={title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        {/* Gradient overlays */}
+        
         <div className="absolute inset-0 bg-gradient-to-t from-[#020202] via-[#020202]/50 to-transparent z-10" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#020202] via-[#020202]/70 to-transparent z-10" />
       </div>
 
-      {/* Hero Content */}
       <div className="relative z-20 max-w-2xl">
-        
-        {/* Badges */}
+
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <span className="px-2.5 py-0.5 rounded-full bg-[#00d2ff] text-black text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#00d2ff]/20">
             Hot Now
@@ -82,17 +79,14 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items, onPlay, onOpenTra
           )}
         </div>
 
-        {/* Title */}
         <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-none mb-4 uppercase">
           {title}
         </h1>
 
-        {/* Overview */}
         <p className="text-xs sm:text-sm text-white/70 max-w-xl line-clamp-3 mb-6 font-normal leading-relaxed">
           {currentItem.overview || 'Experience this thrilling trending visual content on MovieBox+.'}
         </p>
 
-        {/* Action Buttons */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => onPlay(currentItem)}
@@ -132,7 +126,6 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items, onPlay, onOpenTra
         </div>
       </div>
 
-      {/* Rotation Dots */}
       <div className="absolute bottom-6 right-8 z-20 flex items-center gap-2">
         {items.map((_, idx) => (
           <button

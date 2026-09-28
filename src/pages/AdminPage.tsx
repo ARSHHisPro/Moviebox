@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { isAdmin, authenticateAdmin } from '../services/auth';
-import { Shield, Lock, Users, Activity, Film, AlertTriangle, CheckCircle2, Key } from 'lucide-react';
+import { Shield, Lock, Users, Activity, Key } from 'lucide-react';
 import { toast } from '../services/toast';
 
 interface AdminPageProps {
   onNavigate: (route: string) => void;
 }
 
-export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
+export const AdminPage: React.FC<AdminPageProps> = () => {
   const [authenticated, setAuthenticated] = useState(isAdmin());
   const [passcode, setPasscode] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-
-  const [activeTab, setActiveTab] = useState<'users' | 'system' | 'moderation'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'system'>('users');
 
   const mockUsers = [
     { id: '1', name: 'Alex Rivers', email: 'alex@moviebox.io', role: 'admin', status: 'Active' },
@@ -21,37 +20,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     { id: '4', name: 'David Miller', email: 'david@test.com', role: 'user', status: 'Suspended' },
   ];
 
-  const [newPass, setNewPass] = useState('');
-  const [isUpdatingPass, setIsUpdatingPass] = useState(false);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg('');
     const success = await authenticateAdmin(passcode);
     if (success) {
       setAuthenticated(true);
       toast.success('Admin authorization granted');
     } else {
-      setErrorMsg('Invalid admin password. Default passcode: MMSW-BLUEBOX');
-    }
-  };
-
-  const handleUpdateFirestorePass = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPass.trim()) return;
-    setIsUpdatingPass(true);
-    try {
-      const { updateAdminPasswordInFirestore } = await import('../services/firestoreSync');
-      const ok = await updateAdminPasswordInFirestore(newPass.trim());
-      if (ok) {
-        toast.success(`Firestore admin password updated at /config/Admin panel!`);
-        setNewPass('');
-      } else {
-        toast.error('Failed to update password in Firestore');
-      }
-    } catch (e) {
-      toast.error('Error updating password in Firestore');
-    } finally {
-      setIsUpdatingPass(false);
+      setErrorMsg('Invalid admin authorization credentials');
     }
   };
 
@@ -77,7 +54,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="password"
-                  placeholder="Enter passcode (e.g. admin67)"
+                  placeholder="Enter admin passcode"
                   value={passcode}
                   onChange={(e) => {
                     setPasscode(e.target.value);
@@ -104,8 +81,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
-      {/* Header */}
       <div className="flex items-center justify-between pb-6 border-b border-white/10">
         <div>
           <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-widest">
@@ -126,7 +101,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         </button>
       </div>
 
-      {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-white/10 pb-3">
         <button
           onClick={() => setActiveTab('users')}
@@ -146,7 +120,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         </button>
       </div>
 
-      {/* Content Body */}
       {activeTab === 'users' ? (
         <div className="glass-panel p-6 rounded-3xl border border-white/10 overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-300">
@@ -191,40 +164,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
             <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
               <div className="text-xs text-slate-400 font-bold">Streaming Mirror 1</div>
               <div className="text-2xl font-extrabold text-emerald-400">Online (24ms)</div>
-              <div className="text-[11px] text-slate-500">vaplayer.ru active</div>
+              <div className="text-[11px] text-slate-500">Proxy Active</div>
             </div>
             <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
               <div className="text-xs text-slate-400 font-bold">Gemini AI Endpoint</div>
               <div className="text-2xl font-extrabold text-[var(--color-primary)]">Ready</div>
               <div className="text-[11px] text-slate-500">Connected & Fallback Active</div>
             </div>
-          </div>
-
-          {/* Firestore Admin Passcode Manager Card */}
-          <div className="glass-panel p-6 rounded-3xl border border-rose-500/30 space-y-4 bg-black/60">
-            <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
-              <Key className="w-4 h-4" /> Firestore Admin Password Manager
-            </div>
-            <p className="text-xs text-slate-400">
-              The admin password is stored in Firestore at <code className="text-rose-300 font-mono">/config/Admin panel</code> in field <code className="text-rose-300 font-mono">"password"</code>.
-            </p>
-
-            <form onSubmit={handleUpdateFirestorePass} className="flex gap-3 max-w-md">
-              <input
-                type="password"
-                placeholder="Enter new admin password"
-                value={newPass}
-                onChange={(e) => setNewPass(e.target.value)}
-                className="flex-1 bg-white/5 border border-white/10 text-white text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-rose-500"
-              />
-              <button
-                type="submit"
-                disabled={!newPass.trim() || isUpdatingPass}
-                className="px-4 py-2.5 bg-rose-500 text-white font-bold text-xs rounded-xl hover:bg-rose-600 disabled:opacity-50"
-              >
-                {isUpdatingPass ? 'Updating...' : 'Update Password'}
-              </button>
-            </form>
           </div>
         </div>
       )}

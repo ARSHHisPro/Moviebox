@@ -35,7 +35,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     return auth.subscribe((u) => setUser(u));
   }, []);
 
-  // Search input debounce and autocomplete suggestions
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSuggestions([]);
@@ -50,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         setSuggestions((res.results || []).slice(0, 6));
         setShowSuggestions(true);
       } catch (err) {
-        console.error('Search suggestion error', err);
+        
       } finally {
         setIsSearching(false);
       }
@@ -59,7 +58,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Click outside search
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -93,8 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-50 w-full glass-panel border-b border-white/5 bg-black/40 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-2 sm:gap-4">
-        
-        {/* Logo */}
+
         <div className="flex items-center gap-2 cursor-pointer flex-shrink-0" onClick={() => onNavigate('home')}>
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00d2ff] to-[#7b2cbf] flex items-center justify-center shadow-md shadow-[#00d2ff]/20">
             <PlayCircle className="w-5 h-5 text-white" />
@@ -104,7 +101,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </span>
         </div>
 
-        {/* Desktop Navigation Links */}
         <nav className="hidden lg:flex items-center gap-1">
           {navLinks.slice(0, 6).map((link) => {
             const isActive = currentRoute === link.route || currentRoute.startsWith(link.route);
@@ -125,10 +121,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Search Bar & Actions */}
         <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end min-w-0">
-          
-          {/* Search Box */}
+
           <div ref={searchRef} className="relative flex-1 max-w-[160px] sm:max-w-[220px] md:max-w-[260px] xl:max-w-[300px] min-w-[110px]">
             <form onSubmit={handleSearchSubmit} className="relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
@@ -145,7 +139,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </form>
 
-            {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute left-0 right-0 top-full mt-2 glass-panel rounded-2xl overflow-hidden shadow-2xl border border-white/10 z-50 py-1">
                 {suggestions.map((item) => {
@@ -187,9 +180,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Action Buttons Cluster */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-            {/* Quick Interactive Cinephile Features Bar */}
+            
             <div className="hidden 2xl:flex items-center gap-1 border-l border-white/10 pl-2">
               {onOpenWatchParty && (
                 <button
@@ -225,7 +217,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* AI Movie Assistant Button */}
             <button
               onClick={onOpenAiConcierge}
               title="AI Movie Concierge"
@@ -234,7 +225,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Sparkles className="w-4 h-4 text-[var(--color-primary)] animate-pulse" />
             </button>
 
-            {/* Profile / Auth Button */}
             <div className="flex-shrink-0 flex items-center gap-1.5">
               {user ? (
                 <div className="flex items-center gap-1.5">
@@ -265,7 +255,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* Mobile / Drawer Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-200 lg:hidden flex-shrink-0 cursor-pointer"
@@ -277,7 +266,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile & Tablet Drawer Navigation */}
       {isMobileMenuOpen && (
         <div className="lg:hidden glass-panel border-t border-white/10 py-3 px-4 flex flex-col gap-1.5 animate-in slide-in-from-top duration-200">
           {navLinks.map((link) => {
@@ -300,7 +288,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             );
           })}
-          {/* Mobile Interactive Tools Grid */}
+          
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 my-1">
             {onOpenWatchParty && (
               <button

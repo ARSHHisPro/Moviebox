@@ -35,8 +35,7 @@ export const VipTicketModal: React.FC<VipTicketModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg glass-panel border border-amber-500/40 rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
-        
-        {/* Header */}
+
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
@@ -55,10 +54,9 @@ export const VipTicketModal: React.FC<VipTicketModalProps> = ({
           </button>
         </div>
 
-        {/* Ticket Graphic */}
         <div className="p-6 space-y-6">
           <div className="relative p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-black border-2 border-amber-500/30 shadow-2xl overflow-hidden">
-            {/* Holographic Watermark */}
+            
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-amber-500/10 to-purple-500/10 rounded-full blur-2xl pointer-events-none" />
 
             <div className="flex items-start justify-between pb-4 border-b border-amber-500/20">

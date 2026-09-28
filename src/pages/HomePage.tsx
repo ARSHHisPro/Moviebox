@@ -49,7 +49,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         setTopRated(topRes.results || []);
         setNowPlaying(nowRes.results || []);
       } catch (err) {
-        console.error('Home data load error', err);
+        
       } finally {
         setLoading(false);
       }
@@ -85,8 +85,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 space-y-6">
-      
-      {/* Featured Hero Banner */}
+
       <HeroBanner
         items={heroItems}
         onPlay={handleSelectItem}
@@ -94,7 +93,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         onOpenDetails={handleSelectItem}
       />
 
-      {/* AI Movie Concierge CTA Card */}
       <div className="glass-panel border border-[var(--color-primary)]/30 rounded-2xl p-6 relative overflow-hidden bg-gradient-to-r from-purple-900/30 via-black/40 to-[var(--color-primary)]/20 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2 text-center md:text-left">
           <div className="flex items-center gap-2 justify-center md:justify-start">
@@ -118,7 +116,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         </button>
       </div>
 
-      {/* Cinephile Studio Interactive Hub */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -133,7 +130,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Host Watch Party Card */}
+          
           <div
             onClick={onOpenWatchParty}
             className="glass-panel p-5 rounded-2xl border border-cyan-500/30 hover:border-cyan-500/60 bg-gradient-to-br from-cyan-950/30 via-black/40 to-cyan-900/10 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group space-y-3"
@@ -154,7 +151,6 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
           </div>
 
-          {/* Surprise Movie Roulette Card */}
           <div
             onClick={onOpenRoulette}
             className="glass-panel p-5 rounded-2xl border border-amber-500/30 hover:border-amber-500/60 bg-gradient-to-br from-amber-950/30 via-black/40 to-amber-900/10 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group space-y-3"
@@ -175,7 +171,6 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
           </div>
 
-          {/* Movie Trivia Quiz Card */}
           <div
             onClick={onOpenTrivia}
             className="glass-panel p-5 rounded-2xl border border-emerald-500/30 hover:border-emerald-500/60 bg-gradient-to-br from-emerald-950/30 via-black/40 to-emerald-900/10 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group space-y-3"
@@ -198,7 +193,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </div>
 
-      {/* Continue Watching Carousel */}
       {continueList.length > 0 && (
         <Carousel
           title="Continue Watching"
@@ -236,7 +230,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         </Carousel>
       )}
 
-      {/* Trending Movies */}
       <Carousel
         title="Trending Movies"
         subtitle="Most watched films today"
@@ -255,7 +248,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         ))}
       </Carousel>
 
-      {/* Popular TV Shows */}
       <Carousel
         title="Popular TV Series"
         subtitle="Binge-worthy shows"
@@ -274,7 +266,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         ))}
       </Carousel>
 
-      {/* Top Rated Hits */}
       <Carousel
         title="Critically Acclaimed"
         subtitle="Top rated masterpieces"
@@ -293,7 +284,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         ))}
       </Carousel>
 
-      {/* Now Playing in Theaters */}
       <Carousel
         title="Now Playing in Cinemas"
         subtitle="Fresh theatrical releases"

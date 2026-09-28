@@ -128,10 +128,10 @@ export interface WatchProgress {
   backdrop: string | null;
   season?: number;
   episode?: number;
-  lastPosition: number; // in seconds
-  duration: number; // in seconds
-  progress: number; // 0 to 1
-  lastWatched: number; // timestamp
+  lastPosition: number;
+  duration: number;
+  progress: number;
+  lastWatched: number;
 }
 
 export interface WatchHistoryItem {

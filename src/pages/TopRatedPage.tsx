@@ -20,7 +20,7 @@ export const TopRatedPage: React.FC<TopRatedPageProps> = ({ onNavigate }) => {
         const res = type === 'movie' ? await tmdb.getTopRatedMovies(1) : await tmdb.getTopRatedTv(1);
         setItems(res.results || []);
       } catch (err) {
-        console.error(err);
+        
       } finally {
         setLoading(false);
       }
@@ -69,7 +69,7 @@ export const TopRatedPage: React.FC<TopRatedPageProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {items.map((item, index) => (
             <div key={item.id} className="relative group">
-              {/* Rank Badge */}
+              
               <div className="absolute top-2 left-2 z-20 w-8 h-8 rounded-full bg-amber-500 text-black font-extrabold text-xs flex items-center justify-center shadow-lg border border-amber-300">
                 #{index + 1}
               </div>

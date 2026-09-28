@@ -12,21 +12,10 @@ import {
   FirebaseUser
 } from './firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { api } from './api';
 
 const AUTH_STORAGE_KEY = 'moviebox_session';
 const ADMIN_FLAG_KEY = 'moviebox_admin_flag';
-
-const DEFAULT_OWNER_USER: UserProfile = {
-  uid: 'owner-ctrlquest18',
-  email: 'ctrlquest18@gmail.com',
-  username: 'ctrlquest18',
-  isAdmin: true,
-  avatar: '',
-  watchTimeMinutes: 420,
-  streamedCount: 18,
-  createdAt: Date.now(),
-  lastLogin: Date.now(),
-};
 
 type AuthListener = (user: UserProfile | null) => void;
 
@@ -36,7 +25,6 @@ class AuthManager {
   private initialized: boolean = false;
 
   constructor() {
-    // Listen to real Firebase auth changes
     onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
       if (firebaseUser) {
         localStorage.removeItem('moviebox_logged_out');
@@ -49,7 +37,6 @@ class AuthManager {
       this.notify();
     });
 
-    // Clear any stale local session on startup; require fresh Firebase auth
     localStorage.removeItem(AUTH_STORAGE_KEY);
     localStorage.removeItem(ADMIN_FLAG_KEY);
     this.user = null;
@@ -57,7 +44,6 @@ class AuthManager {
 
   private async mapAndSyncFirestoreUser(fUser: FirebaseUser): Promise<UserProfile> {
     const isAdmin = fUser.email?.toLowerCase().includes('admin') || 
-                    fUser.email === 'ctrlquest18@gmail.com' || 
                     localStorage.getItem(ADMIN_FLAG_KEY) === 'true';
 
     const username = fUser.displayName || fUser.email?.split('@')[0] || 'Cinephile';
@@ -67,14 +53,13 @@ class AuthManager {
       email: fUser.email || 'user@moviebox.io',
       username,
       isAdmin: !!isAdmin,
-      avatar: fUser.photoURL || '', // Empty avatar will trigger Default First Letter PFP
+      avatar: fUser.photoURL || '',
       watchTimeMinutes: 120,
       streamedCount: 5,
       createdAt: Date.now(),
       lastLogin: Date.now(),
     };
 
-    // Try fetching from Firestore users collection
     try {
       const userDocRef = doc(db, 'users', fUser.uid);
       const docSnap = await getDoc(userDocRef);
@@ -89,35 +74,15 @@ class AuthManager {
         };
       }
 
-      // Sync latest profile snapshot back to Firestore
       await setDoc(userDocRef, {
         ...profileData,
         updatedAt: Date.now()
       }, { merge: true });
-    } catch (e) {
-      console.warn('Firestore user doc sync warning:', e);
+    } catch {
+
     }
 
     return profileData;
-  }
-
-  private loadFromStorage(): UserProfile | null {
-    if (localStorage.getItem('moviebox_logged_out') === 'true') {
-      return null;
-    }
-    try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // If stored user was the auto-generated owner fallback, clear it so real user authentication is requested
-        if (parsed.uid === 'owner-ctrlquest18') {
-          localStorage.removeItem(AUTH_STORAGE_KEY);
-          return null;
-        }
-        return parsed;
-      }
-    } catch {}
-    return null;
   }
 
   private saveToStorage(user: UserProfile | null) {
@@ -153,29 +118,21 @@ class AuthManager {
 
   public async claimAdmin(password: string): Promise<boolean> {
     const trimmed = password.trim();
-    let validPasscode = 'MMSW-BLUEBOX';
+    if (!trimmed) return false;
 
     try {
-      const configRef = doc(db, 'config', 'Admin panel');
-      const snap = await getDoc(configRef);
-      if (snap.exists() && snap.data().password) {
-        validPasscode = snap.data().password;
-      } else {
-        // Seed initial password into Firestore at /config/Admin panel -> field "password"
-        await setDoc(configRef, { password: 'MMSW-BLUEBOX', updatedAt: Date.now() }, { merge: true });
+      const res = await api.verifyAdminPassword(trimmed);
+      if (res && res.success) {
+        localStorage.setItem(ADMIN_FLAG_KEY, 'true');
+        if (this.user) {
+          this.user.isAdmin = true;
+          this.saveToStorage(this.user);
+        }
+        this.notify();
+        return true;
       }
-    } catch (e) {
-      console.warn('Firestore admin config fetch fallback:', e);
-    }
-
-    if (trimmed === validPasscode || trimmed === 'MMSW-BLUEBOX' || trimmed === 'MMSW-BOXBLUE') {
-      localStorage.setItem(ADMIN_FLAG_KEY, 'true');
-      if (this.user) {
-        this.user.isAdmin = true;
-        this.saveToStorage(this.user);
-      }
-      this.notify();
-      return true;
+    } catch {
+      return false;
     }
     return false;
   }
@@ -213,8 +170,8 @@ class AuthManager {
   public async logout() {
     try {
       await firebaseSignOut(firebaseAuth);
-    } catch (e) {
-      console.error('Firebase signout error', e);
+    } catch {
+
     }
     localStorage.setItem('moviebox_logged_out', 'true');
     this.user = null;
@@ -229,12 +186,11 @@ class AuthManager {
       this.saveToStorage(updated);
       this.notify();
 
-      // Persist to Firestore doc
       try {
         const userDocRef = doc(db, 'users', updated.uid);
         await setDoc(userDocRef, { ...updated, updatedAt: Date.now() }, { merge: true });
-      } catch (e) {
-        console.warn('Failed updating user doc in Firestore:', e);
+      } catch {
+
       }
     }
   }
@@ -284,4 +240,3 @@ export async function signInWithGoogle() {
 export async function signOut() {
   await auth.logout();
 }
-

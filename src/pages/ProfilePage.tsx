@@ -50,8 +50,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
-      {/* Profile Header */}
+
       <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 bg-gradient-to-r from-purple-900/20 via-black/40 to-[var(--color-primary)]/10">
         <div className="flex items-center gap-5">
           <UserAvatar username={user?.username || user?.displayName || 'User'} avatarUrl={user?.avatar} size="lg" />
@@ -90,7 +89,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* User Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
           onClick={() => onNavigate('favorites')}
@@ -120,7 +118,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Account Settings Shortcut Card */}
       <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
         <h3 className="text-base font-bold text-white flex items-center gap-2">
           <Shield className="w-5 h-5 text-[var(--color-primary)]" /> Subscription & Security Status
@@ -144,7 +141,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Owner Lock Manager Modal */}
       <OwnerLockManagerModal isOpen={showLockModal} onClose={() => setShowLockModal(false)} />
     </div>
   );

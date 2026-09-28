@@ -19,7 +19,6 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// Security Middleware
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -47,13 +46,11 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration
 app.use(cors({
   origin: NODE_ENV === 'production' ? process.env.APP_URL || 'http://localhost:3000' : true,
   credentials: true,
 }));
 
-// Rate limiting
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 100,
@@ -65,13 +62,14 @@ app.use('/api/', limiter);
 
 app.use(express.json({ limit: '10mb' }));
 
-// TMDB API Proxy with Caching
 const tmdbCache = new NodeCache({ stdTTL: 1800, checkperiod: 600 });
-
-const TMDB_API_KEY = process.env.TMDB_API_KEY || 'fdd170c9d7c8db200710d267d83d1100';
+const TMDB_API_KEY = process.env.TMDB_API_KEY || '';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 
 async function proxyTMDB(endpoint: string, params: Record<string, string> = {}) {
+  if (!TMDB_API_KEY) {
+    throw new Error('TMDB API Key missing on server');
+  }
   const cacheKey = `${endpoint}:${JSON.stringify(params)}`;
   const cached = tmdbCache.get(cacheKey);
   if (cached) return cached;
@@ -83,22 +81,16 @@ async function proxyTMDB(endpoint: string, params: Record<string, string> = {}) 
     if (v) url.searchParams.append(k, v);
   });
 
-  try {
-    const res = await fetch(url.toString());
-    if (!res.ok) throw new Error(`TMDB ${res.status}`);
-    const data = await res.json();
-    tmdbCache.set(cacheKey, data);
-    return data;
-  } catch (e) {
-    console.error('TMDB proxy error:', e, 'URL:', url.toString());
-    throw e;
-  }
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`TMDB ${res.status}`);
+  const data = await res.json();
+  tmdbCache.set(cacheKey, data);
+  return data;
 }
 
-// Initialize Firebase Admin SDK
 let adminDb: ReturnType<typeof getFirestore> | null = null;
 try {
-  if (!getApps().length) {
+  if (!getApps().length && process.env.FIREBASE_PROJECT_ID) {
     const adminApp = initializeApp({
       credential: cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
@@ -107,37 +99,30 @@ try {
       }),
     });
     adminDb = getFirestore(adminApp);
-  } else {
+  } else if (getApps().length) {
     adminDb = getFirestore(getApp());
   }
-} catch (e) {
-  console.warn('Firebase Admin SDK initialization failed:', e);
+} catch {
+  adminDb = null;
 }
 
-// Auth middleware - verify Firebase ID token
 async function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Missing or invalid authorization token' });
     }
-    const idToken = authHeader.split('Bearer ')[1];
-    // Verify token using Firebase Admin SDK
-    const decoded = await adminDb?.listCollections();
-    // For simplicity, we'll extract uid from a custom header in this demo
-    // In production, use proper Firebase Admin token verification
     const uid = req.headers['x-user-uid'] as string;
     if (!uid) {
       return res.status(401).json({ error: 'User ID required' });
     }
     (req as any).userId = uid;
     next();
-  } catch (e) {
+  } catch {
     return res.status(401).json({ error: 'Invalid token' });
   }
 }
 
-// Public config endpoint
 app.get('/api/public-config', (_req, res) => {
   res.json({
     projectId: process.env.FIREBASE_PROJECT_ID || 'moviebox-boxez',
@@ -145,13 +130,12 @@ app.get('/api/public-config', (_req, res) => {
   });
 });
 
-// TMDB Proxy Routes
 app.get('/api/tmdb/movie/popular', async (req, res) => {
   try {
     const page = String(req.query.page || '1');
     const data = await proxyTMDB('/movie/popular', { page });
     res.json(data);
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch popular movies' });
   }
 });
@@ -161,7 +145,7 @@ app.get('/api/tmdb/tv/popular', async (req, res) => {
     const page = String(req.query.page || '1');
     const data = await proxyTMDB('/tv/popular', { page });
     res.json(data);
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch popular TV shows' });
   }
 });
@@ -172,7 +156,7 @@ app.get('/api/tmdb/trending/:type/:timeWindow', async (req, res) => {
     const page = String(req.query.page || '1');
     const data = await proxyTMDB(`/trending/${type}/${timeWindow}`, { page });
     res.json(data);
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch trending' });
   }
 });
@@ -185,7 +169,7 @@ app.get('/api/tmdb/search/:type', async (req, res) => {
     if (!query) return res.status(400).json({ error: 'Query required' });
     const data = await proxyTMDB(`/search/${type}`, { query, page });
     res.json(data);
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Search failed' });
   }
 });
@@ -205,19 +189,8 @@ app.get('/api/tmdb/discover/:type', async (req, res) => {
     if (page) params.page = String(page);
     const data = await proxyTMDB(`/discover/${type}`, params);
     res.json(data);
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Discover failed' });
-  }
-});
-
-app.get('/api/tmdb/:type/:id', async (req, res) => {
-  try {
-    const { type, id } = req.params;
-    const append = String(req.query.append_to_response || '');
-    const data = await proxyTMDB(`/${type}/${id}`, append ? { append_to_response: append } : {});
-    res.json(data);
-  } catch (e) {
-    res.status(500).json({ error: 'Details fetch failed' });
   }
 });
 
@@ -226,21 +199,29 @@ app.get('/api/tmdb/genre/:type/list', async (req, res) => {
     const { type } = req.params;
     const data = await proxyTMDB(`/genre/${type}/list`);
     res.json(data);
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Genres fetch failed' });
   }
 });
 
-// ============================================
-// BACKEND FIRESTORE API ROUTES
-// ============================================
+app.get('/api/tmdb/*', async (req, res) => {
+  try {
+    const endpoint = (req.params as any)[0];
+    const queryParams: Record<string, string> = {};
+    Object.entries(req.query).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) queryParams[k] = String(v);
+    });
+    const data = await proxyTMDB(`/${endpoint}`, queryParams);
+    res.json(data);
+  } catch {
+    res.status(500).json({ error: 'TMDB endpoint fetch failed' });
+  }
+});
 
-// Helper to get user doc ref
 function userDoc(uid: string, collection: string) {
   return adminDb?.collection('users').doc(uid).collection(collection);
 }
 
-// GET /api/user/data - Get all user data
 app.get('/api/user/data', requireAuth, async (req, res) => {
   try {
     const uid = (req as any).userId;
@@ -264,12 +245,11 @@ app.get('/api/user/data', requireAuth, async (req, res) => {
       continueWatching: continueSnap.docs.map((d: any) => ({ id: d.id, ...d.data() })),
       playlists: playlistsSnap.docs.map((d: any) => ({ id: d.id, ...d.data() })),
     });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch user data' });
   }
 });
 
-// PUT /api/user/data - Update user data
 app.put('/api/user/data', requireAuth, async (req, res) => {
   try {
     const uid = (req as any).userId;
@@ -289,49 +269,34 @@ app.put('/api/user/data', requireAuth, async (req, res) => {
     }
 
     res.json({ success: true });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to update user data' });
   }
 });
 
-// Admin password management
-app.get('/api/admin/password', async (req, res) => {
+app.post('/api/admin/verify', (req, res) => {
   try {
-    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
-    const doc = await adminDb.collection('config').doc('admin').get();
-    const password = doc.exists ? doc.data()?.password : process.env.ADMIN_PASS || 'admin67';
-    res.json({ password });
-  } catch (e) {
-    res.status(500).json({ error: 'Failed to fetch admin password' });
+    const { password } = req.body;
+    const configuredPass = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASS;
+    if (!configuredPass) {
+      return res.status(500).json({ error: 'Admin passcode is not configured on server' });
+    }
+    if (password && String(password).trim() === String(configuredPass).trim()) {
+      return res.json({ success: true });
+    }
+    return res.status(401).json({ error: 'Invalid admin passcode' });
+  } catch {
+    return res.status(500).json({ error: 'Verification error' });
   }
 });
 
-app.put('/api/admin/password', requireAuth, async (req, res) => {
-  try {
-    const uid = (req as any).userId;
-    const { newPassword } = req.body;
-    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
-    
-    await adminDb.collection('config').doc('admin').set({
-      password: newPassword,
-      updatedAt: Date.now(),
-      updatedBy: uid,
-    }, { merge: true });
-    
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ error: 'Failed to update admin password' });
-  }
-});
-
-// Movie Locks Management
 app.get('/api/admin/locks', async (req, res) => {
   try {
     if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
     const doc = await adminDb.collection('config').doc('locked_movies').get();
     const locks = doc.exists ? doc.data()?.locks || {} : {};
     res.json({ locks });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch locks' });
   }
 });
@@ -360,7 +325,7 @@ app.post('/api/admin/locks', requireAuth, async (req, res) => {
 
     await locksRef.set({ locks: currentLocks, lastUpdated: Date.now() }, { merge: true });
     res.json({ success: true, lock: lockData });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to update lock' });
   }
 });
@@ -377,12 +342,11 @@ app.delete('/api/admin/locks/:tmdbId', requireAuth, async (req, res) => {
 
     await locksRef.set({ locks: currentLocks, lastUpdated: Date.now() }, { merge: true });
     res.json({ success: true });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to delete lock' });
   }
 });
 
-// Watch Party Routes
 app.get('/api/watch-party/:roomId', async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -390,7 +354,7 @@ app.get('/api/watch-party/:roomId', async (req, res) => {
     const doc = await adminDb.collection('watch_parties').doc(roomId).get();
     if (!doc.exists) return res.status(404).json({ error: 'Room not found' });
     res.json({ id: doc.id, ...doc.data() });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch watch party' });
   }
 });
@@ -409,7 +373,7 @@ app.post('/api/watch-party', requireAuth, async (req, res) => {
     });
 
     res.json({ roomId });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to create watch party' });
   }
 });
@@ -426,12 +390,11 @@ app.put('/api/watch-party/:roomId', requireAuth, async (req, res) => {
     }, { merge: true });
 
     res.json({ success: true });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to update watch party' });
   }
 });
 
-// Trivia Leaderboard
 app.get('/api/trivia/leaderboard', async (req, res) => {
   try {
     if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
@@ -442,7 +405,7 @@ app.get('/api/trivia/leaderboard', async (req, res) => {
     
     const entries = snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
     res.json({ entries });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }
 });
@@ -459,12 +422,11 @@ app.post('/api/trivia/leaderboard', requireAuth, async (req, res) => {
     }, { merge: true });
 
     res.json({ success: true });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to submit score' });
   }
 });
 
-// Community Reviews
 app.get('/api/reviews/:mediaId', async (req, res) => {
   try {
     const { mediaId } = req.params;
@@ -478,7 +440,7 @@ app.get('/api/reviews/:mediaId', async (req, res) => {
     const reviews = snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
     reviews.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     res.json({ reviews });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch reviews' });
   }
 });
@@ -494,17 +456,15 @@ app.post('/api/reviews', requireAuth, async (req, res) => {
     });
 
     res.json({ id: docRef.id });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to post review' });
   }
 });
 
-// Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// Lazy Gemini instance getter
 function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
@@ -518,7 +478,6 @@ function getGeminiClient() {
   });
 }
 
-// Smart Movie & TV Concierge Fallback Knowledge Engine
 function generateConciergeFallback(promptText: string): string {
   const p = (promptText || '').toLowerCase();
 
@@ -601,7 +560,6 @@ Based on cinematic trends and top critic ratings, here are handpicked masterpiec
 Tip: Need something specific? Ask me for "Anime recommendations", "Mind-bending movies", or "Cozy TV shows"!`;
 }
 
-// Gemini Movie Assistant / Concierge Chat Endpoint
 app.post('/api/gemini/chat', async (req, res) => {
   try {
     const { prompt, history } = req.body;
@@ -646,20 +604,18 @@ Be cinematic, enthusiastic, and helpful. Use clear markdown formatting.`;
           res.json({ text: response.text });
           return;
         }
-      } catch (geminiError) {
-        console.warn('Gemini API call warning, falling back to smart concierge engine:', geminiError);
+      } catch {
+
       }
     }
 
     const fallbackText = generateConciergeFallback(prompt);
     res.json({ text: fallbackText });
-  } catch (err: any) {
-    console.error('Gemini Chat Error:', err);
+  } catch {
     res.json({ text: generateConciergeFallback(req.body.prompt || '') });
   }
 });
 
-// Gemini Smart Search / Recommendation Assistant
 app.post('/api/gemini/recommend', async (req, res) => {
   try {
     const { query, mood, genrePreference } = req.body;
@@ -698,8 +654,8 @@ Output ONLY valid JSON, no markdown backticks.`;
           res.json({ recommendations: parsed });
           return;
         }
-      } catch (geminiError) {
-        console.warn('Gemini recommend warning, falling back:', geminiError);
+      } catch {
+
       }
     }
 
@@ -712,13 +668,11 @@ Output ONLY valid JSON, no markdown backticks.`;
         { title: "Dune: Part Two", year: "2024", type: "movie", reason: "Visually stunning sci-fi spectacle" }
       ]
     });
-  } catch (err: any) {
-    console.error('Gemini Recommend Error:', err);
+  } catch {
     res.json({ recommendations: [] });
   }
 });
 
-// Vite middleware or static serve
 async function setupViteOrStatic() {
   if (NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
@@ -739,9 +693,7 @@ async function setupViteOrStatic() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`MovieBox Premium server running on http://0.0.0.0:${PORT}`);
-  });
+  app.listen(PORT, '0.0.0.0');
 }
 
 setupViteOrStatic();

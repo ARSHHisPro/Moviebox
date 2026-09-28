@@ -35,7 +35,7 @@ export const MoviesPage: React.FC<MoviesPageProps> = ({ onNavigate }) => {
         setMovies(res.results || []);
         setTotalPages(Math.min(res.total_pages || 1, 500));
       } catch (err) {
-        console.error('Error discovering movies', err);
+        
       } finally {
         setLoading(false);
       }
@@ -45,8 +45,7 @@ export const MoviesPage: React.FC<MoviesPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      
-      {/* Header Banner */}
+
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-white/10">
         <div>
           <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">
@@ -56,7 +55,6 @@ export const MoviesPage: React.FC<MoviesPageProps> = ({ onNavigate }) => {
           <p className="text-xs text-slate-400 mt-0.5">Discover blockbusters, indies, and classics from around the globe</p>
         </div>
 
-        {/* View mode toggle */}
         <div className="flex items-center gap-2 p-1 glass-panel rounded-xl">
           <button
             onClick={() => setViewMode('grid')}
@@ -77,14 +75,12 @@ export const MoviesPage: React.FC<MoviesPageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Filter Bar */}
       <div className="glass-panel p-4 rounded-2xl border border-white/10 flex flex-wrap items-center gap-4 text-xs">
         <div className="flex items-center gap-2 text-slate-300 font-bold">
           <Filter className="w-4 h-4 text-[var(--color-primary)]" />
           Filter By:
         </div>
 
-        {/* Genre Dropdown */}
         <select
           value={filters.genreId || ''}
           onChange={(e) => {
@@ -101,7 +97,6 @@ export const MoviesPage: React.FC<MoviesPageProps> = ({ onNavigate }) => {
           ))}
         </select>
 
-        {/* Sort Dropdown */}
         <select
           value={filters.sortBy}
           onChange={(e) => {
@@ -116,7 +111,6 @@ export const MoviesPage: React.FC<MoviesPageProps> = ({ onNavigate }) => {
           <option value="revenue.desc" className="bg-slate-900">Top Box Office</option>
         </select>
 
-        {/* Release Year Dropdown */}
         <select
           value={filters.yearFrom || ''}
           onChange={(e) => {
@@ -134,7 +128,6 @@ export const MoviesPage: React.FC<MoviesPageProps> = ({ onNavigate }) => {
           <option value="2000" className="bg-slate-900">2000s</option>
         </select>
 
-        {/* Rating Filter */}
         <select
           value={filters.ratingMin || 0}
           onChange={(e) => {
@@ -162,7 +155,6 @@ export const MoviesPage: React.FC<MoviesPageProps> = ({ onNavigate }) => {
         )}
       </div>
 
-      {/* Media Grid */}
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {[...Array(10)].map((_, i) => (
@@ -191,7 +183,6 @@ export const MoviesPage: React.FC<MoviesPageProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Pagination Controls */}
       <div className="flex items-center justify-between pt-6 border-t border-white/10">
         <button
           disabled={page <= 1}

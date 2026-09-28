@@ -9,7 +9,7 @@ import { toast } from '../services/toast';
 interface MovieCardProps {
   media: MediaItem;
   onSelect: (media: MediaItem) => void;
-  progress?: number; // 0 to 1 for continue watching
+  progress?: number;
 }
 
 export const MovieCard: React.FC<MovieCardProps> = ({ media, onSelect, progress }) => {
@@ -61,7 +61,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ media, onSelect, progress 
         lockStatus.isLocked ? 'opacity-90' : ''
       }`}
     >
-      {/* Poster Container */}
+      
       <div className="relative aspect-[2/3] w-full rounded-3xl overflow-hidden mb-2.5 border border-white/5 bg-[#111] shadow-lg group-hover:border-[#00d2ff]/40 transition-all duration-300">
         <img
           src={getPosterUrl(media.poster_path)}
@@ -72,13 +72,11 @@ export const MovieCard: React.FC<MovieCardProps> = ({ media, onSelect, progress 
           }`}
         />
 
-        {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-70 group-hover:opacity-90 transition-opacity" />
 
-        {/* Lock & Chains VFX Overlay if locked */}
         {lockStatus.isLocked && (
           <div className="absolute inset-0 z-30 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center p-3 text-center border-2 border-rose-500/50 rounded-3xl animate-in fade-in duration-300">
-            {/* Chains Graphic Lines */}
+            
             <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#rose_500_1px,transparent_1px)] [background-size:16px_16px]" />
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-600 to-amber-500 p-0.5 shadow-xl shadow-rose-500/40 mb-2 animate-bounce">
               <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
@@ -94,7 +92,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({ media, onSelect, progress 
           </div>
         )}
 
-        {/* Top Badges */}
         {!lockStatus.isLocked && (
           <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
             <span className="px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-lg text-[10px] font-bold uppercase tracking-wider text-white/80 border border-white/10">
@@ -122,7 +119,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({ media, onSelect, progress 
           </div>
         )}
 
-        {/* Play Button Overlay (if unlocked) */}
         {!lockStatus.isLocked && (
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
             <div className="w-12 h-12 rounded-full bg-[#00d2ff] flex items-center justify-center scale-75 group-hover:scale-100 transition-transform duration-300 shadow-xl shadow-[#00d2ff]/30">
@@ -131,7 +127,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({ media, onSelect, progress 
           </div>
         )}
 
-        {/* Watch Progress Bar */}
         {progress !== undefined && progress > 0 && !lockStatus.isLocked && (
           <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/60 z-20">
             <div
@@ -142,7 +137,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({ media, onSelect, progress 
         )}
       </div>
 
-      {/* Title & Metadata Below Card */}
       <h3 className="font-bold truncate text-sm text-white uppercase tracking-tight group-hover:text-[#00d2ff] transition-colors">
         {title}
       </h3>

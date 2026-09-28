@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/ToastContainer';
@@ -6,9 +6,7 @@ import { TrailerModal } from './components/TrailerModal';
 import { GeminiConciergeModal } from './components/GeminiConciergeModal';
 import { AuthModal } from './components/AuthModal';
 import { LoadingScreen } from './components/LoadingScreen';
-import { auth } from './services/auth';
 
-// Pages
 import { HomePage } from './pages/HomePage';
 import { MoviesPage } from './pages/MoviesPage';
 import { TvShowsPage } from './pages/TvShowsPage';
@@ -45,18 +43,15 @@ export function App() {
   const [aiConciergeOpen, setAiConciergeOpen] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
 
-  // Cinephile Tool Modals State
   const [watchPartyOpen, setWatchPartyOpen] = useState(false);
   const [triviaOpen, setTriviaOpen] = useState(false);
   const [rouletteOpen, setRouletteOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  // Initialize active theme and check auth
   useEffect(() => {
     themeManager.init();
   }, []);
 
-  // Premium custom cursor
   useEffect(() => {
     const cursor = document.createElement('div');
     cursor.className = 'custom-cursor';
@@ -86,7 +81,6 @@ export function App() {
     };
   }, []);
 
-  // Loading screen complete handler
   const handleLoadingComplete = () => {
     setShowLoading(false);
   };
@@ -106,8 +100,8 @@ export function App() {
     try {
       const key = await tmdb.getTrailerKey(type, item.id);
       setTrailerKey(key);
-    } catch (err) {
-      console.error(err);
+    } catch {
+
     }
   };
 
@@ -176,12 +170,9 @@ export function App() {
       {showLoading && <LoadingScreen onComplete={handleLoadingComplete} />}
 
       <div className="bg-[#020202] min-h-screen text-white flex flex-col font-sans selection:bg-[#00d2ff] selection:text-black relative overflow-x-hidden">
-        
-        {/* Aurora Background */}
         <div className="aurora-bg" />
         <div className="noise-overlay" />
         
-        {/* Background Radial Gradient Canvas */}
         <div
           className="fixed inset-0 pointer-events-none -z-20"
           style={{
@@ -190,12 +181,10 @@ export function App() {
           }}
         />
 
-        {/* Aurora Glow Effects */}
         <div className="fixed top-[-20%] left-[10%] w-[500px] h-[500px] bg-[#00d2ff]/10 blur-[120px] rounded-full pointer-events-none -z-10" />
         <div className="fixed bottom-[-10%] right-[5%] w-[400px] h-[400px] bg-[#7b2cbf]/10 blur-[100px] rounded-full pointer-events-none -z-10" />
         <div className="fixed top-[40%] right-[20%] w-[300px] h-[300px] bg-[#ec4899]/5 blur-[100px] rounded-full pointer-events-none -z-10" />
 
-      {/* Global Navigation Bar */}
       <Navbar
         currentRoute={route}
         onNavigate={handleNavigate}
@@ -205,18 +194,14 @@ export function App() {
         onOpenRoulette={() => setRouletteOpen(true)}
       />
 
-      {/* Main View Area */}
       <main className="flex-1 relative z-10">
         {renderRoutePage()}
       </main>
 
-      {/* Ambient Soundscapes Player */}
       <AmbientPlayer />
 
-      {/* Global Footer */}
       <Footer onNavigate={handleNavigate} />
 
-      {/* Modals & Floating Toasts */}
       <TrailerModal
         isOpen={trailerOpen}
         videoKey={trailerKey}

@@ -121,8 +121,7 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="relative w-full max-w-xl glass-panel border border-[var(--color-primary)]/40 rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
-        
-        {/* Header */}
+
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-[var(--color-primary)] p-0.5 flex items-center justify-center shadow-lg">
@@ -147,7 +146,6 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         {!roomId ? (
           <div className="p-6 space-y-6">
             {mediaItem && (
@@ -202,7 +200,7 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
           </div>
         ) : (
           <div className="p-5 space-y-4 flex-1 flex flex-col overflow-hidden">
-            {/* Room Info Bar */}
+            
             <div className="p-3 rounded-2xl bg-black/60 border border-white/10 flex items-center justify-between">
               <div>
                 <span className="text-[10px] text-slate-400 font-bold uppercase">Room Code</span>
@@ -230,7 +228,6 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
               </div>
             </div>
 
-            {/* Chat Box */}
             <div className="flex-1 overflow-y-auto space-y-3 p-3 bg-black/40 rounded-2xl border border-white/5 min-h-[200px]">
               {roomData?.messages?.map((msg) => (
                 <div key={msg.id} className="text-xs">
@@ -240,7 +237,6 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
               ))}
             </div>
 
-            {/* Input Bar */}
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <input
                 type="text"

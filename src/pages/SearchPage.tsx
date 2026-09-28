@@ -53,7 +53,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ route, onNavigate, onOpe
           setResults(media);
         }
       } catch (err) {
-        console.error('Search failure', err);
+        
       } finally {
         setLoading(false);
       }
@@ -71,8 +71,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ route, onNavigate, onOpe
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      
-      {/* Search Input Hero Box */}
+
       <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4">
         <h1 className="text-2xl sm:text-3xl font-black text-white">Search MovieBox Catalog</h1>
         <p className="text-xs text-slate-400">Search over 800,000+ movies, TV series, actors, and directors</p>
@@ -94,7 +93,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({ route, onNavigate, onOpe
           </button>
         </form>
 
-        {/* Recent Searches Tags */}
         {recentSearches.length > 0 && (
           <div className="pt-2 flex items-center gap-2 flex-wrap">
             <span className="text-xs text-slate-400 flex items-center gap-1 font-bold">
@@ -122,7 +120,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({ route, onNavigate, onOpe
         )}
       </div>
 
-      {/* Search Tabs */}
       {query.trim() && (
         <div className="flex items-center gap-2 border-b border-white/10 pb-3">
           {(['all', 'movie', 'tv', 'person'] as const).map((tab) => (
@@ -141,7 +138,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({ route, onNavigate, onOpe
         </div>
       )}
 
-      {/* Results Content */}
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {[...Array(10)].map((_, i) => (

@@ -60,8 +60,7 @@ export const CustomPlaylistModal: React.FC<CustomPlaylistModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="relative w-full max-w-md glass-panel border border-[var(--color-primary)]/40 rounded-3xl overflow-hidden flex flex-col shadow-2xl">
-        
-        {/* Header */}
+
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary)]/20 text-[var(--color-primary)] border border-[var(--color-primary)]/30 flex items-center justify-center">
@@ -78,7 +77,6 @@ export const CustomPlaylistModal: React.FC<CustomPlaylistModalProps> = ({
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleCreate} className="p-6 space-y-4">
           <div>
             <label className="text-xs font-bold text-slate-300 block mb-1">Playlist Title</label>

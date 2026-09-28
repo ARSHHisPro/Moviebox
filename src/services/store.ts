@@ -26,8 +26,8 @@ class SubscribedStore<T> {
   protected save() {
     try {
       localStorage.setItem(this.key, JSON.stringify(this.items));
-    } catch (e) {
-      console.warn(`Failed to save ${this.key} to localStorage`, e);
+    } catch {
+
     }
     this.notify();
   }
@@ -63,7 +63,6 @@ class SubscribedStore<T> {
   }
 }
 
-// 1. Favorites Store with backend sync
 class FavoritesStore extends SubscribedStore<FavoriteItem> {
   private currentUserId: string | null = null;
 
@@ -84,8 +83,8 @@ class FavoritesStore extends SubscribedStore<FavoriteItem> {
     if (!this.currentUserId) return;
     try {
       await api.updateUserData('favorites', null, { items: this.items, syncedAt: Date.now() }, 'replace');
-    } catch (e) {
-      console.warn('Backend favorites sync failed:', e);
+    } catch {
+
     }
   }
 
@@ -127,7 +126,6 @@ class FavoritesStore extends SubscribedStore<FavoriteItem> {
   }
 }
 
-// 2. Continue Watching Store
 class ContinueWatchingStore extends SubscribedStore<WatchProgress> {
   constructor() {
     super('moviebox_continue_watching');
@@ -178,7 +176,6 @@ class ContinueWatchingStore extends SubscribedStore<WatchProgress> {
   }
 }
 
-// 3. Watch History Store
 class WatchHistoryStore extends SubscribedStore<WatchHistoryItem> {
   constructor() {
     super('moviebox_watch_history');
@@ -211,7 +208,6 @@ class WatchHistoryStore extends SubscribedStore<WatchHistoryItem> {
   }
 }
 
-// 4. Recent Searches Store
 class RecentSearchStore extends SubscribedStore<string> {
   constructor() {
     super('moviebox_recent_searches');
@@ -231,7 +227,6 @@ class RecentSearchStore extends SubscribedStore<string> {
   }
 }
 
-// Export singletons
 export const favoritesStore = new FavoritesStore();
 export const continueWatchingStore = new ContinueWatchingStore();
 export const watchHistoryStore = new WatchHistoryStore();

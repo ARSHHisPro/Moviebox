@@ -1,33 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Reviews collection: public read, write allowed
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create, update: if true;
-      allow delete: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (request.auth.uid == resource.data.userId || request.auth.token.admin == true);
     }
 
-    // Watch Parties collection: public read, write allowed
     match /watch_parties/{roomId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create, update: if request.auth != null;
+      allow delete: if request.auth != null && (request.auth.uid == resource.data.hostId || request.auth.token.admin == true);
     }
 
-    // Config collection (locks & admin settings): public read, write allowed
     match /config/{configId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
     }
 
-    // Leaderboard: public read, write allowed
     match /leaderboard/{userId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.token.admin == true;
     }
 
-    // Users and user subcollections: read/write allowed for owner or authenticated users
     match /users/{userId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
       match /{allSubcollections=**} {
-        allow read, write: if true;
+        allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
       }
     }
   }

@@ -53,7 +53,7 @@ export const GeminiConciergeModal: React.FC<GeminiConciergeModalProps> = ({ isOp
       const text = data?.text || 'Here are top handpicked recommendations based on your input! Search any title above to watch in HD.';
       setMessages([...newMessages, { role: 'model', content: text }]);
     } catch (err: any) {
-      console.error('Concierge Chat Error:', err);
+      
       setMessages([
         ...newMessages,
         {
@@ -76,8 +76,7 @@ export const GeminiConciergeModal: React.FC<GeminiConciergeModalProps> = ({ isOp
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl glass-panel border border-[var(--color-primary)]/40 rounded-3xl overflow-hidden flex flex-col h-[600px] max-h-[90vh] shadow-2xl shadow-[var(--color-primary-glow)]">
-        
-        {/* Header */}
+
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-[var(--color-primary)] p-0.5 flex items-center justify-center shadow-lg shadow-[var(--color-primary-glow)]">
@@ -104,7 +103,6 @@ export const GeminiConciergeModal: React.FC<GeminiConciergeModalProps> = ({ isOp
           </button>
         </div>
 
-        {/* Chat Messages Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           {messages.map((msg, idx) => (
             <div
@@ -149,7 +147,6 @@ export const GeminiConciergeModal: React.FC<GeminiConciergeModalProps> = ({ isOp
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick Prompts */}
         <div className="px-4 py-2 bg-black/20 border-t border-white/5 flex gap-2 overflow-x-auto scrollbar-none">
           {quickPrompts.map((qp, idx) => (
             <button
@@ -162,7 +159,6 @@ export const GeminiConciergeModal: React.FC<GeminiConciergeModalProps> = ({ isOp
           ))}
         </div>
 
-        {/* Input Bar */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
