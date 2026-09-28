@@ -69,10 +69,14 @@ async function fetchFromTMDB<T>(endpoint: string, params: Record<string, string 
         }
       }
     } catch {
-      // Direct TMDB API Fallback
+      // Fallback to client environment variable
     }
 
-    const apiKey = import.meta.env.VITE_TMDB_API_KEY || 'fdd170c9d7c8db200710d267d83d1100';
+    const apiKey = import.meta.env.VITE_TMDB_API_KEY || '';
+    if (!apiKey) {
+      throw new Error(`TMDB API Key missing. Please set VITE_TMDB_API_KEY.`);
+    }
+
     const fallbackUrlObj = new URL(`https://api.themoviedb.org/3${endpoint}`);
     fallbackUrlObj.searchParams.append('api_key', apiKey);
     fallbackUrlObj.searchParams.append('language', 'en-US');

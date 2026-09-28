@@ -63,7 +63,7 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 
 const tmdbCache = new NodeCache({ stdTTL: 1800, checkperiod: 600 });
-const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY || 'fdd170c9d7c8db200710d267d83d1100';
+const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY || '';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 
 async function proxyTMDB(endpoint: string, params: Record<string, string> = {}) {

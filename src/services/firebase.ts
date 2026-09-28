@@ -11,21 +11,20 @@ import {
   User as FirebaseUser 
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import firebaseAppletConfig from '../../firebase-applet-config.json';
 
 export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'moviebox-boxez.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'moviebox-boxez',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'moviebox-boxez.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '571104348600',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:571104348600:web:4ccc66a8b7507c2317a74d',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-X5FVPQ5R7Z'
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ''
 };
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseAppletConfig.firestoreDatabaseId || undefined);
+export const db = getFirestore(app, import.meta.env.VITE_FIREBASE_DATABASE_ID || undefined);
 export const googleProvider = new GoogleAuthProvider();
 
 export { 
