@@ -54,12 +54,41 @@ async function fetchFromTMDB<T>(endpoint: string, params: Record<string, string 
   }
 
   const requestPromise = (async () => {
+    try {
+      const response = await fetch(fullUrl);
+      if (response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          if (cache.size >= MAX_CACHE_ENTRIES) {
+            const oldestKey = cache.keys().next().value;
+            if (oldestKey) cache.delete(oldestKey);
+          }
+          cache.set(fullUrl, { data, timestamp: Date.now() });
+          return data as T;
+        }
+      }
+    } catch {
+      // Direct TMDB API Fallback
+    }
+
+    const apiKey = import.meta.env.VITE_TMDB_API_KEY || 'fdd170c9d7c8db200710d267d83d1100';
+    const fallbackUrlObj = new URL(`https://api.themoviedb.org/3${endpoint}`);
+    fallbackUrlObj.searchParams.append('api_key', apiKey);
+    fallbackUrlObj.searchParams.append('language', 'en-US');
+
+    Object.entries(params).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== '') {
+        fallbackUrlObj.searchParams.append(key, String(val));
+      }
+    });
+
     let retries = 2;
     let delay = 500;
 
     while (retries >= 0) {
       try {
-        const response = await fetch(fullUrl);
+        const response = await fetch(fallbackUrlObj.toString());
         if (response.status === 429) {
           await new Promise(r => setTimeout(r, delay * 2));
           retries--;
@@ -68,16 +97,14 @@ async function fetchFromTMDB<T>(endpoint: string, params: Record<string, string 
         }
 
         if (!response.ok) {
-          throw new Error(`TMDB error ${response.status}: ${response.statusText}`);
+          throw new Error(`TMDB error ${response.status}`);
         }
 
         const data = await response.json();
-
         if (cache.size >= MAX_CACHE_ENTRIES) {
           const oldestKey = cache.keys().next().value;
           if (oldestKey) cache.delete(oldestKey);
         }
-
         cache.set(fullUrl, { data, timestamp: Date.now() });
         return data as T;
       } catch (err) {
@@ -87,6 +114,7 @@ async function fetchFromTMDB<T>(endpoint: string, params: Record<string, string 
         delay *= 2;
       }
     }
+
     throw new Error(`Failed to fetch from TMDB endpoint ${endpoint}`);
   })();
 
