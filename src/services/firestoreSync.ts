@@ -45,32 +45,7 @@ export interface CommunityReview {
   createdAt: number;
 }
 
-export interface WatchPartyParticipant {
-  displayName: string;
-  joinedAt: number;
-  isActive: boolean;
-}
 
-export interface WatchPartyRoom {
-  id: string;
-  hostId: string;
-  hostName: string;
-  mediaId: number;
-  mediaType: 'movie' | 'tv';
-  mediaTitle: string;
-  mediaPoster: string | null;
-  currentTime: number;
-  isPlaying: boolean;
-  messages: Array<{
-    id: string;
-    sender: string;
-    text: string;
-    time: number;
-  }>;
-  participants: Record<string, WatchPartyParticipant>;
-  participantCount: number;
-  updatedAt: number;
-}
 
 export interface LeaderboardEntry {
   id: string;
@@ -159,339 +134,6 @@ async function ensureAuth() {
   }
 }
 
-const partyChannels: Record<string, BroadcastChannel> = {};
-function getPartyChannel(roomId: string): BroadcastChannel | null {
-  if (typeof BroadcastChannel === 'undefined') return null;
-  if (!partyChannels[roomId]) {
-    try {
-      partyChannels[roomId] = new BroadcastChannel(`mb_wp_${roomId}`);
-    } catch {
-      return null;
-    }
-  }
-  return partyChannels[roomId];
-}
-
-export async function createWatchPartyRoom(room: Omit<WatchPartyRoom, 'id'>): Promise<string> {
-  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const roomObj: WatchPartyRoom = cleanFirestoreData({
-    ...room,
-    id: code,
-    mediaPoster: room.mediaPoster ?? null,
-    currentTime: room.currentTime ?? 0,
-    isPlaying: room.isPlaying ?? true,
-    messages: room.messages ?? [],
-    participants: room.participants ?? {},
-    participantCount: room.participantCount ?? 1,
-    updatedAt: Date.now(),
-  });
-
-  await ensureAuth();
-  const docRef = doc(db, 'watch_parties', code);
-
-  try {
-    await setDoc(docRef, roomObj);
-  } catch (firestoreErr) {
-    try {
-      await signInAnonymously(auth);
-      await setDoc(docRef, roomObj);
-    } catch {
-      try {
-        await api.createWatchParty(roomObj);
-      } catch {
-      }
-    }
-  }
-
-  return code;
-}
-
-export async function checkWatchPartyRoomExists(roomId: string): Promise<boolean> {
-  const code = roomId.trim().toUpperCase();
-  if (!code) return false;
-  await ensureAuth();
-
-  try {
-    const docRef = doc(db, 'watch_parties', code);
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      return true;
-    }
-  } catch {
-  }
-
-  try {
-    const data = await api.getWatchParty(code);
-    if (data && (data.id || data.roomId)) {
-      return true;
-    }
-  } catch {
-  }
-
-  return false;
-}
-
-export async function updateWatchPartyState(roomId: string, updates: Partial<WatchPartyRoom>) {
-  const cleanUpdates = cleanFirestoreData({ ...updates, updatedAt: Date.now() });
-
-  try {
-    await ensureAuth();
-    const docRef = doc(db, 'watch_parties', roomId);
-    await setDoc(docRef, cleanUpdates, { merge: true });
-  } catch {
-    try {
-      await api.updateWatchParty(roomId, cleanUpdates);
-    } catch {
-    }
-  }
-}
-
-export async function deleteWatchPartyRoom(roomId: string) {
-  try {
-    await ensureAuth();
-    const docRef = doc(db, 'watch_parties', roomId);
-    await deleteDoc(docRef);
-  } catch {
-    try {
-      await api.deleteWatchParty(roomId);
-    } catch {
-    }
-  }
-}
-
-export async function joinWatchPartyRoom(
-  roomId: string,
-  userId: string,
-  displayName: string
-): Promise<{ success: boolean; hostId?: string; error?: string }> {
-  const code = roomId.trim().toUpperCase();
-  if (!code) return { success: false, error: 'Room code cannot be empty' };
-
-  await ensureAuth();
-  let existingRoom: WatchPartyRoom | null = null;
-  const docRef = doc(db, 'watch_parties', code);
-
-  try {
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      existingRoom = { id: snap.id, ...snap.data() } as WatchPartyRoom;
-    }
-  } catch {
-  }
-
-  if (!existingRoom) {
-    try {
-      const data = await api.getWatchParty(code);
-      if (data && (data.id || data.roomId)) {
-        existingRoom = { id: data.id || data.roomId, ...data } as WatchPartyRoom;
-      }
-    } catch {
-    }
-  }
-
-  if (!existingRoom) {
-    return {
-      success: false,
-      error: `Room code "${code}" does not exist in the database. Please verify the code with the host.`,
-    };
-  }
-
-  const participants = existingRoom.participants || {};
-  participants[userId] = {
-    displayName: displayName || 'Audience Member',
-    joinedAt: Date.now(),
-    isActive: true,
-  };
-  const activeCount = Object.keys(participants).filter((k) => participants[k]?.isActive).length;
-
-  const messages = existingRoom.messages || [];
-  const hasJoinedMsg = messages.some((m) => m.text.includes(`${displayName} joined the party`));
-  if (!hasJoinedMsg && userId !== existingRoom.hostId) {
-    messages.push({
-      id: Date.now().toString(),
-      sender: 'System',
-      text: `${displayName} joined the party!`,
-      time: Date.now(),
-    });
-  }
-
-  const updates = cleanFirestoreData({
-    participants,
-    participantCount: activeCount,
-    messages,
-    updatedAt: Date.now(),
-  });
-
-  await updateWatchPartyState(code, updates);
-  return { success: true, hostId: existingRoom.hostId };
-}
-
-export async function leaveWatchPartyRoom(roomId: string, userId: string) {
-  let existingRoom: WatchPartyRoom | null = null;
-  try {
-    const local = localStorage.getItem(`moviebox_room_${roomId}`);
-    if (local) existingRoom = JSON.parse(local);
-  } catch {
-  }
-
-  try {
-    await ensureAuth();
-    const docRef = doc(db, 'watch_parties', roomId);
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      existingRoom = { id: snap.id, ...snap.data() } as WatchPartyRoom;
-    }
-  } catch {
-  }
-
-  if (!existingRoom) {
-    try {
-      return await api.leaveWatchParty(roomId, userId);
-    } catch {
-      return { success: true };
-    }
-  }
-
-  const participants = existingRoom.participants || {};
-  if (participants[userId]) {
-    participants[userId].isActive = false;
-  }
-
-  const activeList = Object.keys(participants).filter((k) => participants[k]?.isActive);
-  if (activeList.length === 0) {
-    await deleteWatchPartyRoom(roomId);
-    return { success: true, roomDeleted: true };
-  }
-
-  let newHostId = existingRoom.hostId;
-  let newHostName = existingRoom.hostName;
-  let messages = existingRoom.messages || [];
-
-  if (existingRoom.hostId === userId && activeList.length > 0) {
-    newHostId = activeList[0];
-    newHostName = participants[newHostId]?.displayName || 'New Host';
-    messages = [
-      ...messages,
-      {
-        id: Date.now().toString(),
-        sender: 'System',
-        text: `${newHostName} is now the host.`,
-        time: Date.now(),
-      },
-    ];
-  }
-
-  const updates = {
-    hostId: newHostId,
-    hostName: newHostName,
-    participants,
-    participantCount: activeList.length,
-    messages,
-    updatedAt: Date.now(),
-  };
-
-  await updateWatchPartyState(roomId, updates);
-  return { success: true, newHostId };
-}
-
-export function subscribeToWatchParty(roomId: string, callback: (room: WatchPartyRoom | null) => void) {
-  let unsubFirestore: (() => void) | null = null;
-  let active = true;
-
-  try {
-    const local = localStorage.getItem(`moviebox_room_${roomId}`);
-    if (local) {
-      const parsed = JSON.parse(local);
-      if (parsed) callback(parsed);
-    }
-  } catch {
-  }
-
-  const ch = getPartyChannel(roomId);
-  const handleBroadcast = (e: MessageEvent) => {
-    if (!active) return;
-    if (e.data?.type === 'UPDATE' && e.data.room) {
-      callback(e.data.room);
-    } else if (e.data?.type === 'DELETE') {
-      callback(null);
-    }
-  };
-  ch?.addEventListener('message', handleBroadcast);
-
-  const handleStorage = (e: StorageEvent) => {
-    if (!active) return;
-    if (e.key === `moviebox_room_${roomId}`) {
-      if (e.newValue) {
-        try {
-          callback(JSON.parse(e.newValue));
-        } catch {
-        }
-      } else {
-        callback(null);
-      }
-    }
-  };
-  window.addEventListener('storage', handleStorage);
-
-  let pollInterval: any = null;
-  function startPolling() {
-    if (pollInterval) return;
-    const fetchRoom = async () => {
-      if (!active) return;
-      try {
-        const data = await api.getWatchParty(roomId);
-        if (data && active) {
-          const room = { id: data.id || roomId, ...data } as WatchPartyRoom;
-          try {
-            localStorage.setItem(`moviebox_room_${roomId}`, JSON.stringify(room));
-          } catch {
-          }
-          callback(room);
-        }
-      } catch {
-      }
-    };
-    fetchRoom();
-    pollInterval = setInterval(fetchRoom, 2500);
-  }
-
-  try {
-    const docRef = doc(db, 'watch_parties', roomId);
-    unsubFirestore = onSnapshot(
-      docRef,
-      (snap) => {
-        if (!active) return;
-        if (snap.exists()) {
-          const roomData = { id: snap.id, ...snap.data() } as WatchPartyRoom;
-          try {
-            localStorage.setItem(`moviebox_room_${roomId}`, JSON.stringify(roomData));
-          } catch {
-          }
-          callback(roomData);
-        } else {
-          const local = localStorage.getItem(`moviebox_room_${roomId}`);
-          if (!local) {
-            callback(null);
-          }
-        }
-      },
-      () => {
-        startPolling();
-      }
-    );
-  } catch {
-    startPolling();
-  }
-
-  return () => {
-    active = false;
-    if (unsubFirestore) unsubFirestore();
-    if (pollInterval) clearInterval(pollInterval);
-    ch?.removeEventListener('message', handleBroadcast);
-    window.removeEventListener('storage', handleStorage);
-  };
-}
-
 export async function getAnnouncementConfig(): Promise<AnnouncementConfig | null> {
   try {
     await ensureAuth();
@@ -525,25 +167,25 @@ export async function getAnnouncementConfig(): Promise<AnnouncementConfig | null
 }
 
 export async function setAnnouncementConfig(announcement: AnnouncementConfig): Promise<boolean> {
+  const payload = { ...announcement, updatedAt: Date.now() };
   try {
     await ensureAuth();
     const docRef = doc(db, 'config', 'announcement');
-    await setDoc(docRef, { ...announcement, updatedAt: Date.now() }, { merge: true });
-    localStorage.setItem('moviebox_announcement', JSON.stringify(announcement));
-    window.dispatchEvent(new Event('moviebox_announcement_updated'));
-    return true;
-  } catch {
-    try {
-      await api.setAnnouncement(announcement.text, announcement.type, announcement.active);
-      localStorage.setItem('moviebox_announcement', JSON.stringify(announcement));
-      window.dispatchEvent(new Event('moviebox_announcement_updated'));
-      return true;
-    } catch {
-      localStorage.setItem('moviebox_announcement', JSON.stringify(announcement));
-      window.dispatchEvent(new Event('moviebox_announcement_updated'));
-      return true;
-    }
+    await setDoc(docRef, payload, { merge: true });
+    localStorage.setItem('moviebox_announcement', JSON.stringify(payload));
+  } catch (err) {
+    console.error('Direct firestore setAnnouncementConfig failed:', err);
   }
+
+  try {
+    await api.setAnnouncement(announcement.text, announcement.type, announcement.active);
+    localStorage.setItem('moviebox_announcement', JSON.stringify(payload));
+  } catch (err) {
+    console.error('API setAnnouncement failed:', err);
+  }
+
+  window.dispatchEvent(new Event('moviebox_announcement_updated'));
+  return true;
 }
 
 export interface SystemSettings {
@@ -589,17 +231,25 @@ export async function getSystemSettings(): Promise<SystemSettings> {
 }
 
 export async function updateSystemSettings(updates: Partial<SystemSettings>): Promise<boolean> {
+  const merged = { ...updates, updatedAt: Date.now() };
   try {
     await ensureAuth();
     const docRef = doc(db, 'config', 'settings');
-    const merged = { ...updates, updatedAt: Date.now() };
     await setDoc(docRef, cleanFirestoreData(merged), { merge: true });
     localStorage.setItem('moviebox_system_settings', JSON.stringify(merged));
-    window.dispatchEvent(new Event('moviebox_settings_updated'));
-    return true;
-  } catch {
-    return false;
+  } catch (err) {
+    console.error('Direct firestore updateSystemSettings failed:', err);
   }
+
+  try {
+    await api.updateSettings(cleanFirestoreData(merged));
+    localStorage.setItem('moviebox_system_settings', JSON.stringify(merged));
+  } catch (err) {
+    console.error('API updateSettings failed:', err);
+  }
+
+  window.dispatchEvent(new Event('moviebox_settings_updated'));
+  return true;
 }
 
 export function subscribeToSystemSettings(callback: (settings: SystemSettings) => void): () => void {
@@ -620,7 +270,7 @@ export function subscribeToSystemSettings(callback: (settings: SystemSettings) =
 
 const SEED_LEADERBOARD_ENTRIES: Omit<LeaderboardEntry, 'id'>[] = [
   {
-    userId: 'demo',
+    userId: 'cinephile_prime',
     username: 'MovieBuff',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
     score: 1850,

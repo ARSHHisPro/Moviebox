@@ -81,8 +81,35 @@
     font-family: var(--font-body);
     overflow-x: hidden;
     min-height: 100vh;
-    cursor: none;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
   }
+
+  @media (hover: hover) and (pointer: fine) {
+    body {
+      cursor: none;
+    }
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    body {
+      cursor: auto !important;
+    }
+    .custom-cursor {
+      display: none !important;
+    }
+  }
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+button, a, input, select {
+  touch-action: manipulation;
 }
 
 /* Glassmorphism Classes */

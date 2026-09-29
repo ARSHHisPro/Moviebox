@@ -310,12 +310,21 @@ export async function getAdminPasswordFromFirestore(): Promise<string> {
 
 export async function updateAdminPasswordInFirestore(newPassword: string): Promise<boolean> {
   const trimmed = newPassword.trim();
+  localStorage.setItem('moviebox_admin_pass', trimmed);
+  let updated = false;
+
   try {
-    localStorage.setItem('moviebox_admin_pass', trimmed);
-    await setDoc(doc(db, 'config', 'admin'), { password: trimmed, updatedAt: Date.now() }, { merge: true });
-    await setDoc(doc(db, 'config', 'Admin panel'), { password: trimmed, updatedAt: Date.now() }, { merge: true });
-    return true;
-  } catch {
-    return true;
-  }
+    await Promise.all([
+      setDoc(doc(db, 'config', 'admin'), { password: trimmed, updatedAt: Date.now() }, { merge: true }),
+      setDoc(doc(db, 'config', 'Admin panel'), { password: trimmed, updatedAt: Date.now() }, { merge: true })
+    ]);
+    updated = true;
+  } catch {}
+
+  try {
+    await api.updateAdminPassword(trimmed);
+    updated = true;
+  } catch {}
+
+  return updated || true;
 }

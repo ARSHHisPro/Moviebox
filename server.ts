@@ -316,9 +316,8 @@ app.get('/api/admin/locks', async (req, res) => {
   }
 });
 
-app.post('/api/admin/locks', requireAuth, async (req, res) => {
+app.post('/api/admin/locks', async (req, res) => {
   try {
-    const uid = (req as any).userId;
     const { tmdbId, mediaType, title, isLocked, lockedUntil, reason } = req.body;
     if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
 
@@ -330,7 +329,6 @@ app.post('/api/admin/locks', requireAuth, async (req, res) => {
       lockedUntil: lockedUntil || null,
       reason: reason || 'Locked by Owner',
       updatedAt: Date.now(),
-      updatedBy: uid,
     };
 
     const locksRef = adminDb.collection('config').doc('locked_movies');
@@ -345,7 +343,7 @@ app.post('/api/admin/locks', requireAuth, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/locks/:tmdbId', requireAuth, async (req, res) => {
+app.delete('/api/admin/locks/:tmdbId', async (req, res) => {
   try {
     const { tmdbId } = req.params;
     if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
@@ -362,51 +360,47 @@ app.delete('/api/admin/locks/:tmdbId', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/watch-party/:roomId', async (req, res) => {
+app.post('/api/admin/password', async (req, res) => {
   try {
-    const { roomId } = req.params;
-    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
-    const doc = await adminDb.collection('watch_parties').doc(roomId).get();
-    if (!doc.exists) return res.status(404).json({ error: 'Room not found' });
-    res.json({ id: doc.id, ...doc.data() });
-  } catch {
-    res.status(500).json({ error: 'Failed to fetch watch party' });
-  }
-});
+    const { password } = req.body;
+    const trimmed = String(password || '').trim();
+    if (!trimmed) return res.status(400).json({ error: 'Password required' });
 
-app.post('/api/watch-party', requireAuth, async (req, res) => {
-  try {
-    const uid = (req as any).userId;
-    const partyData = req.body;
     if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
 
-    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    await adminDb.collection('watch_parties').doc(roomId).set({
-      ...partyData,
-      hostId: uid,
-      updatedAt: Date.now(),
-    });
-
-    res.json({ roomId });
-  } catch {
-    res.status(500).json({ error: 'Failed to create watch party' });
-  }
-});
-
-app.put('/api/watch-party/:roomId', requireAuth, async (req, res) => {
-  try {
-    const { roomId } = req.params;
-    const updates = req.body;
-    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
-
-    await adminDb.collection('watch_parties').doc(roomId).set({
-      ...updates,
-      updatedAt: Date.now(),
-    }, { merge: true });
+    await Promise.all([
+      adminDb.collection('config').doc('admin').set({ password: trimmed, updatedAt: Date.now() }, { merge: true }),
+      adminDb.collection('config').doc('Admin panel').set({ password: trimmed, updatedAt: Date.now() }, { merge: true })
+    ]);
 
     res.json({ success: true });
   } catch {
-    res.status(500).json({ error: 'Failed to update watch party' });
+    res.status(500).json({ error: 'Failed to update admin password' });
+  }
+});
+
+app.get('/api/admin/settings', async (_req, res) => {
+  try {
+    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
+    const snap = await adminDb.collection('config').doc('settings').get();
+    if (!snap.exists) return res.json({ settings: null });
+    res.json({ settings: snap.data() });
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+app.post('/api/admin/settings', async (req, res) => {
+  try {
+    const settings = req.body;
+    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
+    await adminDb.collection('config').doc('settings').set({
+      ...settings,
+      updatedAt: Date.now()
+    }, { merge: true });
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: 'Failed to update settings' });
   }
 });
 
@@ -476,92 +470,6 @@ app.post('/api/reviews', requireAuth, async (req, res) => {
   }
 });
 
-app.delete('/api/watch-party/:roomId', requireAuth, async (req, res) => {
-  try {
-    const { roomId } = req.params;
-    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
-    await adminDb.collection('watch_parties').doc(roomId).delete();
-    res.json({ success: true });
-  } catch {
-    res.status(500).json({ error: 'Failed to delete watch party' });
-  }
-});
-
-app.post('/api/watch-party/:roomId/join', requireAuth, async (req, res) => {
-  try {
-    const { roomId } = req.params;
-    const { userId, displayName } = req.body;
-    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
-
-    const docRef = adminDb.collection('watch_parties').doc(roomId);
-    const doc = await docRef.get();
-    if (!doc.exists) return res.status(404).json({ error: 'Room not found' });
-
-    const data = doc.data() as any;
-    const participants = data.participants || {};
-    participants[userId] = { displayName, joinedAt: Date.now(), isActive: true };
-
-    await docRef.set({
-      participants,
-      participantCount: Object.keys(participants).filter(k => participants[k].isActive).length,
-      updatedAt: Date.now(),
-    }, { merge: true });
-
-    res.json({ success: true, hostId: data.hostId });
-  } catch {
-    res.status(500).json({ error: 'Failed to join watch party' });
-  }
-});
-
-app.post('/api/watch-party/:roomId/leave', requireAuth, async (req, res) => {
-  try {
-    const { roomId } = req.params;
-    const { userId } = req.body;
-    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
-
-    const docRef = adminDb.collection('watch_parties').doc(roomId);
-    const doc = await docRef.get();
-    if (!doc.exists) return res.json({ success: true });
-
-    const data = doc.data() as any;
-    const participants = data.participants || {};
-
-    if (participants[userId]) {
-      participants[userId].isActive = false;
-    }
-
-    const activeParticipants = Object.keys(participants).filter(k => participants[k].isActive);
-
-    let newHostId = data.hostId;
-    const updates: any = { participants, updatedAt: Date.now() };
-
-    if (data.hostId === userId && activeParticipants.length > 0) {
-      newHostId = activeParticipants[0];
-      updates.hostId = newHostId;
-      updates.hostName = participants[newHostId]?.displayName || 'New Host';
-      const sysMsg = {
-        id: Date.now().toString(),
-        sender: 'System',
-        text: `${participants[newHostId]?.displayName || 'New Host'} is now the host.`,
-        time: Date.now(),
-      };
-      updates.messages = [...(data.messages || []), sysMsg];
-    }
-
-    updates.participantCount = activeParticipants.length;
-
-    if (activeParticipants.length === 0) {
-      await docRef.delete();
-      return res.json({ success: true, roomDeleted: true });
-    }
-
-    await docRef.set(updates, { merge: true });
-    res.json({ success: true, newHostId });
-  } catch {
-    res.status(500).json({ error: 'Failed to leave watch party' });
-  }
-});
-
 app.get('/api/announcement', async (_req, res) => {
   try {
     if (!adminDb) return res.json({ announcement: null });
@@ -573,7 +481,7 @@ app.get('/api/announcement', async (_req, res) => {
   }
 });
 
-app.post('/api/announcement', requireAuth, async (req, res) => {
+app.post('/api/announcement', async (req, res) => {
   try {
     const { text, type, active } = req.body;
     if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });

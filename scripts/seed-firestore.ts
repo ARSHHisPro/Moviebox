@@ -35,25 +35,11 @@ async function seed() {
     updatedAt: Date.now(),
   });
 
-  await db.collection('watch_parties').doc('SAMPLE').set({
-    hostId: 'demo',
-    hostName: 'Demo Host',
+  await db.collection('reviews').doc('review_1').set({
     mediaId: 550,
     mediaType: 'movie',
     mediaTitle: 'Fight Club',
-    mediaPoster: '/path/to/poster.jpg',
-    currentTime: 0,
-    isPlaying: false,
-    messages: [],
-    participantCount: 1,
-    updatedAt: Date.now(),
-  });
-
-  await db.collection('reviews').doc('sample1').set({
-    mediaId: 550,
-    mediaType: 'movie',
-    mediaTitle: 'Fight Club',
-    userId: 'demo',
+    userId: 'cinephile_prime',
     username: 'MovieBuff',
     userAvatar: 'https://ui-avatars.com/api/?name=MovieBuff&background=7b2cbf&color=fff',
     rating: 9,
@@ -63,7 +49,7 @@ async function seed() {
   });
 
   const leaderboardData = [
-    { userId: 'user1', username: 'Cinephile', avatar: 'https://ui-avatars.com/api/?name=Cinephile&background=00d2ff&color=fff', score: 9500, streak: 15, rankTitle: 'Movie Master' },
+    { userId: 'cinephile_prime', username: 'Cinephile', avatar: 'https://ui-avatars.com/api/?name=Cinephile&background=00d2ff&color=fff', score: 9500, streak: 15, rankTitle: 'Movie Master' },
     { userId: 'user2', username: 'BingeWatcher', avatar: 'https://ui-avatars.com/api/?name=BingeWatcher&background=ec4899&color=fff', score: 8200, streak: 12, rankTitle: 'Series Addict' },
     { userId: 'user3', username: 'NightOwl', avatar: 'https://ui-avatars.com/api/?name=NightOwl&background=ffd700&color=000', score: 7800, streak: 10, rankTitle: 'Marathon Runner' },
   ];
@@ -75,10 +61,10 @@ async function seed() {
     });
   }
 
-  await db.collection('users').doc('demo').set({
-    displayName: 'Demo User',
-    email: 'demo@moviebox.app',
-    photoURL: 'https://ui-avatars.com/api/?name=Demo+User&background=7b2cbf&color=fff',
+  await db.collection('users').doc('cinephile_prime').set({
+    displayName: 'MovieBox Member',
+    email: 'member@moviebox.app',
+    photoURL: 'https://ui-avatars.com/api/?name=MovieBox+Member&background=7b2cbf&color=fff',
     createdAt: Date.now(),
     preferences: {
       autoplay: true,
@@ -87,10 +73,10 @@ async function seed() {
     },
   }, { merge: true });
 
-  await db.collection('users').doc('demo').collection('favorites').doc('_meta').set({ count: 0 });
-  await db.collection('users').doc('demo').collection('history').doc('_meta').set({ count: 0 });
-  await db.collection('users').doc('demo').collection('continue_watching').doc('_meta').set({ count: 0 });
-  await db.collection('users').doc('demo').collection('playlists').doc('_meta').set({ count: 0 });
+  await db.collection('users').doc('cinephile_prime').collection('favorites').doc('_meta').set({ count: 0 });
+  await db.collection('users').doc('cinephile_prime').collection('history').doc('_meta').set({ count: 0 });
+  await db.collection('users').doc('cinephile_prime').collection('continue_watching').doc('_meta').set({ count: 0 });
+  await db.collection('users').doc('cinephile_prime').collection('playlists').doc('_meta').set({ count: 0 });
 
   await deleteApp(adminApp);
 }

@@ -291,7 +291,7 @@ export const Player: React.FC<PlayerProps> = ({
 
   if (!currentUser) {
     return (
-      <div className="relative w-full h-[85vh] min-h-[520px] max-h-[900px] bg-gradient-to-b from-slate-950 via-black to-slate-950 rounded-3xl overflow-hidden border border-white/10 shadow-2xl flex flex-col items-center justify-center p-6 text-center select-none">
+      <div className="relative w-full min-h-[420px] sm:min-h-[520px] max-h-[900px] bg-gradient-to-b from-slate-950 via-black to-slate-950 rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 shadow-2xl flex flex-col items-center justify-center p-4 sm:p-6 text-center select-none">
         
         {media.backdrop_path && (
           <img
@@ -411,11 +411,11 @@ export const Player: React.FC<PlayerProps> = ({
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="relative w-full h-[85vh] min-h-[500px] max-h-[900px] bg-black rounded-3xl overflow-hidden glass-panel border border-white/10 shadow-2xl flex flex-col group select-none"
+      className="relative w-full h-[55vh] sm:h-[75vh] md:h-[85vh] min-h-[260px] sm:min-h-[450px] max-h-[900px] bg-black rounded-xl sm:rounded-3xl overflow-hidden glass-panel border border-white/10 shadow-2xl flex flex-col group select-none"
     >
       
       <div
-        className={`absolute top-0 left-0 right-0 z-30 p-4 bg-gradient-to-b from-black/95 via-black/50 to-transparent flex items-center justify-between transition-opacity duration-300 ${
+        className={`absolute top-0 left-0 right-0 z-30 p-2 sm:p-4 bg-gradient-to-b from-black/95 via-black/50 to-transparent flex items-center justify-between transition-opacity duration-300 ${
           showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >

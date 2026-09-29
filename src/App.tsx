@@ -26,12 +26,11 @@ import { AuthPage } from './pages/AuthPage';
 import { AdminPage } from './pages/AdminPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { WatchPartyPage } from './pages/WatchPartyPage';
 import { AnnouncementBar } from './components/AnnouncementBar';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { subscribeToSystemSettings } from './services/firestoreSync';
 
 import { AmbientPlayer } from './components/AmbientPlayer';
-import { WatchPartyModal } from './components/WatchPartyModal';
 import { TriviaGameModal } from './components/TriviaGameModal';
 import { SurpriseWheelModal } from './components/SurpriseWheelModal';
 
@@ -47,7 +46,6 @@ export function App() {
   const [aiConciergeOpen, setAiConciergeOpen] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
 
-  const [watchPartyOpen, setWatchPartyOpen] = useState(false);
   const [triviaOpen, setTriviaOpen] = useState(false);
   const [rouletteOpen, setRouletteOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -57,6 +55,10 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isTouch = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouch) return;
+
     const cursor = document.createElement('div');
     cursor.className = 'custom-cursor';
     document.body.appendChild(cursor);
@@ -119,7 +121,6 @@ export function App() {
             onNavigate={handleNavigate}
             onOpenTrailer={handleOpenTrailer}
             onOpenAiConcierge={() => setAiConciergeOpen(true)}
-            onOpenWatchParty={() => setWatchPartyOpen(true)}
             onOpenTrivia={() => setTriviaOpen(true)}
             onOpenRoulette={() => setRouletteOpen(true)}
           />
@@ -166,22 +167,6 @@ export function App() {
         return <LeaderboardPage onNavigate={handleNavigate} onOpenTrivia={() => setTriviaOpen(true)} />;
       case 'admin':
         return <AdminPage onNavigate={handleNavigate} />;
-      case 'party':
-      case 'watch-party': {
-        const queryParams = new URLSearchParams(route.split('?')[1] || '');
-        const roomId = queryParams.get('room') || '';
-        const id = Number(queryParams.get('id')) || undefined;
-        const type = (queryParams.get('type') as 'movie' | 'tv') || 'movie';
-        const title = queryParams.get('title') || '';
-        return (
-          <WatchPartyPage
-            roomId={roomId || undefined}
-            mediaItem={id ? { id, title, type, poster: null } : undefined}
-            onClose={() => handleNavigate('home')}
-            onNavigate={handleNavigate}
-          />
-        );
-      }
       default:
         return <NotFoundPage onNavigate={handleNavigate} />;
     }
@@ -211,14 +196,13 @@ export function App() {
         currentRoute={route}
         onNavigate={handleNavigate}
         onOpenAiConcierge={() => setAiConciergeOpen(true)}
-        onOpenWatchParty={() => setWatchPartyOpen(true)}
         onOpenTrivia={() => setTriviaOpen(true)}
         onOpenRoulette={() => setRouletteOpen(true)}
       />
 
       <AnnouncementBar />
 
-      <main className="flex-1 relative z-10">
+      <main className="flex-1 relative z-10 pb-20 md:pb-0">
         {renderRoutePage()}
       </main>
 
@@ -242,14 +226,6 @@ export function App() {
         }}
       />
 
-      <WatchPartyModal
-        isOpen={watchPartyOpen}
-        onClose={() => setWatchPartyOpen(false)}
-        onNavigateToWatch={(id, type, roomId) => {
-          handleNavigate(roomId ? `party?room=${roomId}&id=${id}&type=${type}` : `watch?type=${type}&id=${id}`);
-        }}
-      />
-
       <TriviaGameModal
         isOpen={triviaOpen}
         onClose={() => setTriviaOpen(false)}
@@ -267,6 +243,11 @@ export function App() {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         onSuccess={() => setAuthModalOpen(false)}
+      />
+
+      <MobileBottomNav
+        currentRoute={route}
+        onNavigate={handleNavigate}
       />
 
       <ToastContainer />

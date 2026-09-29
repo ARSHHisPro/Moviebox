@@ -10,7 +10,6 @@ interface NavbarProps {
   currentRoute: string;
   onNavigate: (route: string) => void;
   onOpenAiConcierge: () => void;
-  onOpenWatchParty?: () => void;
   onOpenTrivia?: () => void;
   onOpenRoulette?: () => void;
 }
@@ -19,7 +18,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentRoute,
   onNavigate,
   onOpenAiConcierge,
-  onOpenWatchParty,
   onOpenTrivia,
   onOpenRoulette
 }) => {
@@ -184,17 +182,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             
             <div className="hidden 2xl:flex items-center gap-1 border-l border-white/10 pl-2">
-              {onOpenWatchParty && (
-                <button
-                  onClick={onOpenWatchParty}
-                  title="Host Watch Party"
-                  className="px-2 py-1.5 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span>Party</span>
-                </button>
-              )}
-
               {onOpenRoulette && (
                 <button
                   onClick={onOpenRoulette}
@@ -301,19 +288,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             );
           })}
           
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 my-1">
-            {onOpenWatchParty && (
-              <button
-                onClick={() => {
-                  onOpenWatchParty();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="p-2 rounded-xl bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 text-xs font-semibold flex flex-col items-center justify-center gap-1 cursor-pointer"
-              >
-                <Users className="w-4 h-4" />
-                <span>Watch Party</span>
-              </button>
-            )}
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 my-1">
             {onOpenRoulette && (
               <button
                 onClick={() => {

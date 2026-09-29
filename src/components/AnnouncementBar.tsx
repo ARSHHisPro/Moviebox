@@ -52,13 +52,13 @@ export const AnnouncementBar: React.FC = () => {
       return cached
         ? JSON.parse(cached)
         : {
-            text: 'Welcome to MovieBox+! Live Sync Watch Party and 4K streaming are now active.',
+            text: 'Welcome to MovieBox+! 4K Ultra HD streaming and new cinema releases are now live.',
             type: 'info',
             active: true,
           };
     } catch {
       return {
-        text: 'Welcome to MovieBox+! Live Sync Watch Party and 4K streaming are now active.',
+        text: 'Welcome to MovieBox+! 4K Ultra HD streaming and new cinema releases are now live.',
         type: 'info',
         active: true,
       };

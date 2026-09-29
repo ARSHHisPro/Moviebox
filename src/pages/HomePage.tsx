@@ -12,7 +12,6 @@ interface HomePageProps {
   onNavigate: (route: string) => void;
   onOpenTrailer: (item: MediaItem) => void;
   onOpenAiConcierge: () => void;
-  onOpenWatchParty?: () => void;
   onOpenTrivia?: () => void;
   onOpenRoulette?: () => void;
 }
@@ -21,7 +20,6 @@ export const HomePage: React.FC<HomePageProps> = ({
   onNavigate,
   onOpenTrailer,
   onOpenAiConcierge,
-  onOpenWatchParty,
   onOpenTrivia,
   onOpenRoulette
 }) => {
@@ -126,31 +124,11 @@ export const HomePage: React.FC<HomePageProps> = ({
             </h2>
           </div>
           <span className="text-[10px] font-bold text-[#00d2ff] bg-[#00d2ff]/10 px-2 py-0.5 rounded-md border border-[#00d2ff]/20">
-            4 Live Modules Active
+            Interactive Lounge
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          
-          <div
-            onClick={onOpenWatchParty}
-            className="glass-panel p-5 rounded-2xl border border-cyan-500/30 hover:border-cyan-500/60 bg-gradient-to-br from-cyan-950/30 via-black/40 to-cyan-900/10 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <div className="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                <Users className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] uppercase font-black text-cyan-400 tracking-wider">Multi-User Sync</span>
-            </div>
-            <div>
-              <h3 className="text-sm font-black text-white group-hover:text-cyan-300 transition-colors">
-                Host a Watch Party
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-                Create synchronized streaming rooms with live room chat, timestamp sync, and custom invite codes.
-              </p>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
 
           <div
             onClick={onOpenRoulette}

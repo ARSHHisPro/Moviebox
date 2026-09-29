@@ -12,6 +12,11 @@ async function request(path: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${user.uid}`;
   }
 
+  const adminPass = localStorage.getItem('moviebox_admin_pass');
+  if (adminPass) {
+    headers['x-admin-pass'] = adminPass;
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
@@ -41,6 +46,19 @@ export const api = {
       body: JSON.stringify({ password }),
     }),
 
+  updateAdminPassword: (password: string) =>
+    request('/admin/password', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    }),
+
+  getSettings: () => request('/admin/settings'),
+  updateSettings: (settings: any) =>
+    request('/admin/settings', {
+      method: 'POST',
+      body: JSON.stringify(settings),
+    }),
+
   getLocks: () => request('/admin/locks'),
   setLock: (lockData: any) =>
     request('/admin/locks', {
@@ -49,30 +67,6 @@ export const api = {
     }),
   deleteLock: (tmdbId: number) =>
     request(`/admin/locks/${tmdbId}`, { method: 'DELETE' }),
-
-  getWatchParty: (roomId: string) => request(`/watch-party/${roomId}`),
-  createWatchParty: (data: any) =>
-    request('/watch-party', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-  updateWatchParty: (roomId: string, updates: any) =>
-    request(`/watch-party/${roomId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    }),
-  deleteWatchParty: (roomId: string) =>
-    request(`/watch-party/${roomId}`, { method: 'DELETE' }),
-  joinWatchParty: (roomId: string, userId: string, displayName: string) =>
-    request(`/watch-party/${roomId}/join`, {
-      method: 'POST',
-      body: JSON.stringify({ userId, displayName }),
-    }),
-  leaveWatchParty: (roomId: string, userId: string) =>
-    request(`/watch-party/${roomId}/leave`, {
-      method: 'POST',
-      body: JSON.stringify({ userId }),
-    }),
 
   getLeaderboard: () => request('/trivia/leaderboard'),
   submitTriviaScore: (entry: any) =>

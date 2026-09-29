@@ -105,7 +105,7 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
           setUsersList(users);
         } else {
           setUsersList([
-            { id: 'demo', name: 'Demo User', email: 'demo@moviebox.app', role: 'user', status: 'Active' },
+            { id: 'usr_prime', name: 'MovieBox Member', email: 'member@moviebox.app', role: 'user', status: 'Active' },
             { id: '1', name: 'Alex Rivers', email: 'alex@moviebox.io', role: 'admin', status: 'Active' },
             { id: '2', name: 'Sophia Chen', email: 'sophia@moviebox.io', role: 'vip', status: 'Active' }
           ]);
