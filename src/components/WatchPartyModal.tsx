@@ -12,6 +12,7 @@ interface WatchPartyModalProps {
     title: string;
     type: 'movie' | 'tv';
     poster: string | null;
+    year?: string;
   };
   onNavigateToWatch: (mediaId: number, mediaType: 'movie' | 'tv', roomId?: string) => void;
 }
@@ -67,11 +68,16 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
             time: Date.now()
           }
         ],
+        participants: {
+          [hostId]: { displayName: hostName, joinedAt: Date.now(), isActive: true }
+        },
         participantCount: 1,
         updatedAt: Date.now()
       });
       setRoomId(code);
       toast.success(`Watch Party room ${code} generated!`);
+      onNavigateToWatch(mediaItem.id, mediaItem.type, code);
+      onClose();
     } catch (e) {
       toast.error('Failed creating Watch Party room');
     } finally {
@@ -82,8 +88,9 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
   const handleJoinRoom = () => {
     const code = joinInput.trim().toUpperCase();
     if (!code) return;
-    setRoomId(code);
-    toast.info(`Joined Watch Party room ${code}`);
+    toast.info(`Joining Watch Party room ${code}`);
+    onNavigateToWatch(0, 'movie', code);
+    onClose();
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {

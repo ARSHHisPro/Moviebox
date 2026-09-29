@@ -461,6 +461,177 @@ app.post('/api/reviews', requireAuth, async (req, res) => {
   }
 });
 
+app.delete('/api/watch-party/:roomId', requireAuth, async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
+    await adminDb.collection('watch_parties').doc(roomId).delete();
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: 'Failed to delete watch party' });
+  }
+});
+
+app.post('/api/watch-party/:roomId/join', requireAuth, async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { userId, displayName } = req.body;
+    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
+
+    const docRef = adminDb.collection('watch_parties').doc(roomId);
+    const doc = await docRef.get();
+    if (!doc.exists) return res.status(404).json({ error: 'Room not found' });
+
+    const data = doc.data() as any;
+    const participants = data.participants || {};
+    participants[userId] = { displayName, joinedAt: Date.now(), isActive: true };
+
+    await docRef.set({
+      participants,
+      participantCount: Object.keys(participants).filter(k => participants[k].isActive).length,
+      updatedAt: Date.now(),
+    }, { merge: true });
+
+    res.json({ success: true, hostId: data.hostId });
+  } catch {
+    res.status(500).json({ error: 'Failed to join watch party' });
+  }
+});
+
+app.post('/api/watch-party/:roomId/leave', requireAuth, async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { userId } = req.body;
+    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
+
+    const docRef = adminDb.collection('watch_parties').doc(roomId);
+    const doc = await docRef.get();
+    if (!doc.exists) return res.json({ success: true });
+
+    const data = doc.data() as any;
+    const participants = data.participants || {};
+
+    if (participants[userId]) {
+      participants[userId].isActive = false;
+    }
+
+    const activeParticipants = Object.keys(participants).filter(k => participants[k].isActive);
+
+    let newHostId = data.hostId;
+    const updates: any = { participants, updatedAt: Date.now() };
+
+    if (data.hostId === userId && activeParticipants.length > 0) {
+      newHostId = activeParticipants[0];
+      updates.hostId = newHostId;
+      updates.hostName = participants[newHostId]?.displayName || 'New Host';
+      const sysMsg = {
+        id: Date.now().toString(),
+        sender: 'System',
+        text: `${participants[newHostId]?.displayName || 'New Host'} is now the host.`,
+        time: Date.now(),
+      };
+      updates.messages = [...(data.messages || []), sysMsg];
+    }
+
+    updates.participantCount = activeParticipants.length;
+
+    if (activeParticipants.length === 0) {
+      await docRef.delete();
+      return res.json({ success: true, roomDeleted: true });
+    }
+
+    await docRef.set(updates, { merge: true });
+    res.json({ success: true, newHostId });
+  } catch {
+    res.status(500).json({ error: 'Failed to leave watch party' });
+  }
+});
+
+app.get('/api/announcement', async (_req, res) => {
+  try {
+    if (!adminDb) return res.json({ announcement: null });
+    const doc = await adminDb.collection('config').doc('announcement').get();
+    if (!doc.exists) return res.json({ announcement: null });
+    res.json({ announcement: doc.data() });
+  } catch {
+    res.json({ announcement: null });
+  }
+});
+
+app.post('/api/announcement', requireAuth, async (req, res) => {
+  try {
+    const { text, type, active } = req.body;
+    if (!adminDb) return res.status(500).json({ error: 'Database not initialized' });
+    await adminDb.collection('config').doc('announcement').set({
+      text: text || '',
+      type: type || 'info',
+      active: active !== false,
+      updatedAt: Date.now(),
+    });
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: 'Failed to update announcement' });
+  }
+});
+
+app.get('/api/news', async (_req, res) => {
+  const FALLBACK_NEWS = [
+    {
+      id: '1',
+      headline: 'Spider-Man: Brand New Day is getting re-released in cinemas across multiple countries',
+      category: 'Release',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    },
+    {
+      id: '2',
+      headline: 'Avengers: Doomsday wraps principal photography ahead of May 2026 release',
+      category: 'Production',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    },
+    {
+      id: '3',
+      headline: "Peaky Blinders movie begins filming in Birmingham with Cillian Murphy confirmed to return",
+      category: 'Production',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    },
+    {
+      id: '4',
+      headline: 'The Dark Knight 4K Remaster confirmed for IMAX theatrical re-release later this year',
+      category: 'Release',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    },
+    {
+      id: '5',
+      headline: 'James Gunn reveals first official plot details for the DC Universe Superman reboot',
+      category: 'Exclusive',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    },
+  ];
+
+  try {
+    const ai = getGeminiClient();
+    if (ai) {
+      const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const prompt = `Today is ${today}. Generate 5 realistic, current movie and TV entertainment news headlines for a streaming platform news ticker. Include: Spider-Man Brand New Day re-release in cinemas. Mix of: new releases, production news, casting announcements. Format as JSON array: [{"id":"1","headline":"...","category":"Release|Production|Casting|Exclusive","date":"${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}"}]. Output ONLY valid JSON.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: { responseMimeType: 'application/json', temperature: 0.6 }
+      });
+
+      const jsonText = response.text?.trim() || '[]';
+      const parsed = JSON.parse(jsonText);
+      if (Array.isArray(parsed) && parsed.length >= 3) {
+        return res.json({ news: parsed });
+      }
+    }
+  } catch {
+  }
+
+  res.json({ news: FALLBACK_NEWS });
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
@@ -591,7 +762,7 @@ Be cinematic, enthusiastic, and helpful. Use clear markdown formatting.`;
         });
 
         const response = await ai.models.generateContent({
-          model: 'gemini-3.6-flash',
+          model: 'gemini-2.0-flash',
           contents,
           config: {
             systemInstruction,
@@ -640,7 +811,7 @@ Return a valid JSON array of 5 suggested titles with the exact structure:
 Output ONLY valid JSON, no markdown backticks.`;
 
         const response = await ai.models.generateContent({
-          model: 'gemini-3.6-flash',
+          model: 'gemini-2.0-flash',
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           config: {
             responseMimeType: 'application/json',

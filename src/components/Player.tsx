@@ -115,6 +115,22 @@ export const Player: React.FC<PlayerProps> = ({
     };
   }, [media.id]);
 
+  useEffect(() => {
+    if (type !== 'tv') return;
+    let isCurrent = true;
+    async function loadEpisodes() {
+      try {
+        const data = await tmdb.getTvSeasonDetails(media.id, season);
+        if (isCurrent && data?.episodes) {
+          setEpisodesList(data.episodes);
+        }
+      } catch {
+      }
+    }
+    loadEpisodes();
+    return () => { isCurrent = false; };
+  }, [type, media.id, season]);
+
   const savedProgress = continueWatchingStore.getById(media.id, type, season, episode);
   const resumeSeconds = savedProgress?.lastPosition || 0;
   const playStartTimeRef = useRef(Date.now());

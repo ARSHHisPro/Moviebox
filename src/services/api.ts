@@ -9,6 +9,7 @@ async function request(path: string, options: RequestInit = {}) {
 
   if (user?.uid) {
     headers['x-user-uid'] = user.uid;
+    headers['Authorization'] = `Bearer ${user.uid}`;
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -60,6 +61,18 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(updates),
     }),
+  deleteWatchParty: (roomId: string) =>
+    request(`/watch-party/${roomId}`, { method: 'DELETE' }),
+  joinWatchParty: (roomId: string, userId: string, displayName: string) =>
+    request(`/watch-party/${roomId}/join`, {
+      method: 'POST',
+      body: JSON.stringify({ userId, displayName }),
+    }),
+  leaveWatchParty: (roomId: string, userId: string) =>
+    request(`/watch-party/${roomId}/leave`, {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    }),
 
   getLeaderboard: () => request('/trivia/leaderboard'),
   submitTriviaScore: (entry: any) =>
@@ -74,6 +87,15 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(review),
     }),
+
+  getAnnouncement: () => request('/announcement'),
+  setAnnouncement: (text: string, type: string, active: boolean) =>
+    request('/announcement', {
+      method: 'POST',
+      body: JSON.stringify({ text, type, active }),
+    }),
+
+  getNews: () => request('/news'),
 };
 
 function getCurrentUser() {

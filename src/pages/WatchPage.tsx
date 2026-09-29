@@ -247,7 +247,7 @@ export const WatchPage: React.FC<WatchPageProps> = ({ route, onNavigate, onOpenT
         }}
         onNavigateToWatch={(mId, mType, roomId) => {
           setWatchPartyOpen(false);
-          onNavigate(`watch?type=${mType}&id=${mId}${roomId ? `&room=${roomId}` : ''}`);
+          onNavigate(roomId ? `party?room=${roomId}&id=${mId}&type=${mType}` : `watch?type=${mType}&id=${mId}`);
         }}
       />
 

@@ -5,7 +5,8 @@ import { HeroBanner } from '../components/HeroBanner';
 import { Carousel } from '../components/Carousel';
 import { MovieCard } from '../components/MovieCard';
 import { continueWatchingStore } from '../services/store';
-import { Flame, PlayCircle, Film, Tv, Star, Sparkles, ChevronRight, Users, Shuffle, Trophy, Headphones } from 'lucide-react';
+import { Flame, PlayCircle, Film, Tv, Star, Sparkles, ChevronRight, Users, Shuffle, Trophy, Headphones, Trash2 } from 'lucide-react';
+import { toast } from '../services/toast';
 
 interface HomePageProps {
   onNavigate: (route: string) => void;
@@ -219,12 +220,24 @@ export const HomePage: React.FC<HomePageProps> = ({
               vote_average: 8.0,
             };
             return (
-              <MovieCard
-                key={`${item.type}-${item.id}`}
-                media={mediaItem}
-                progress={item.progress}
-                onSelect={() => handleSelectItem(mediaItem)}
-              />
+              <div key={`${item.type}-${item.id}-${item.season || 0}-${item.episode || 0}`} className="relative group">
+                <MovieCard
+                  media={mediaItem}
+                  progress={item.progress}
+                  onSelect={() => handleSelectItem(mediaItem)}
+                />
+                <button
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    continueWatchingStore.removeItem(item.id, item.type, item.season, item.episode);
+                    toast.info(`Removed "${item.title}"`);
+                  }}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/85 text-slate-300 hover:text-rose-400 border border-white/10 z-30 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all shadow-md active:scale-90"
+                  title="Remove from Continue Watching"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             );
           })}
         </Carousel>

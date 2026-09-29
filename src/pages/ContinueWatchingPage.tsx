@@ -76,7 +76,7 @@ export const ContinueWatchingPage: React.FC<ContinueWatchingPageProps> = ({ onNa
                     continueWatchingStore.removeItem(item.id, item.type, item.season, item.episode);
                     toast.info(`Removed "${item.title}"`);
                   }}
-                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 text-slate-400 hover:text-rose-400 z-30 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-2 right-2 p-2 rounded-full bg-black/85 text-slate-300 hover:text-rose-400 border border-white/10 z-30 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all shadow-lg active:scale-90"
                   title="Remove from Continue Watching"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

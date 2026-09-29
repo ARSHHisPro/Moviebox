@@ -30,6 +30,12 @@ export interface CommunityReview {
   createdAt: number;
 }
 
+export interface WatchPartyParticipant {
+  displayName: string;
+  joinedAt: number;
+  isActive: boolean;
+}
+
 export interface WatchPartyRoom {
   id: string;
   hostId: string;
@@ -46,6 +52,7 @@ export interface WatchPartyRoom {
     text: string;
     time: number;
   }>;
+  participants: Record<string, WatchPartyParticipant>;
   participantCount: number;
   updatedAt: number;
 }
@@ -102,6 +109,30 @@ export async function updateWatchPartyState(roomId: string, updates: Partial<Wat
   }
 }
 
+export async function deleteWatchPartyRoom(roomId: string) {
+  try {
+    await api.deleteWatchParty(roomId);
+  } catch {
+
+  }
+}
+
+export async function joinWatchPartyRoom(roomId: string, userId: string, displayName: string) {
+  try {
+    return await api.joinWatchParty(roomId, userId, displayName);
+  } catch {
+    return null;
+  }
+}
+
+export async function leaveWatchPartyRoom(roomId: string, userId: string) {
+  try {
+    return await api.leaveWatchParty(roomId, userId);
+  } catch {
+    return null;
+  }
+}
+
 export async function getLeaderboardTop(): Promise<LeaderboardEntry[]> {
   try {
     const data = await api.getLeaderboard();
@@ -151,7 +182,7 @@ export function subscribeToWatchParty(roomId: string, callback: (room: WatchPart
   };
 
   fetchRoom();
-  const interval = setInterval(fetchRoom, 5000);
+  const interval = setInterval(fetchRoom, 2000);
 
   return () => {
     active = false;

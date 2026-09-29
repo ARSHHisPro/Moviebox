@@ -25,6 +25,8 @@ import { SettingsPage } from './pages/SettingsPage';
 import { AuthPage } from './pages/AuthPage';
 import { AdminPage } from './pages/AdminPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { WatchPartyPage } from './pages/WatchPartyPage';
+import { AnnouncementBar } from './components/AnnouncementBar';
 
 import { AmbientPlayer } from './components/AmbientPlayer';
 import { WatchPartyModal } from './components/WatchPartyModal';
@@ -160,6 +162,22 @@ export function App() {
         return <AuthPage onNavigate={handleNavigate} />;
       case 'admin':
         return <AdminPage onNavigate={handleNavigate} />;
+      case 'party':
+      case 'watch-party': {
+        const queryParams = new URLSearchParams(route.split('?')[1] || '');
+        const roomId = queryParams.get('room') || '';
+        const id = Number(queryParams.get('id')) || undefined;
+        const type = (queryParams.get('type') as 'movie' | 'tv') || 'movie';
+        const title = queryParams.get('title') || '';
+        return (
+          <WatchPartyPage
+            roomId={roomId || undefined}
+            mediaItem={id ? { id, title, type, poster: null } : undefined}
+            onClose={() => handleNavigate('home')}
+            onNavigate={handleNavigate}
+          />
+        );
+      }
       default:
         return <NotFoundPage onNavigate={handleNavigate} />;
     }
@@ -194,6 +212,8 @@ export function App() {
         onOpenRoulette={() => setRouletteOpen(true)}
       />
 
+      <AnnouncementBar />
+
       <main className="flex-1 relative z-10">
         {renderRoutePage()}
       </main>
@@ -222,7 +242,7 @@ export function App() {
         isOpen={watchPartyOpen}
         onClose={() => setWatchPartyOpen(false)}
         onNavigateToWatch={(id, type, roomId) => {
-          handleNavigate(`watch?type=${type}&id=${id}${roomId ? `&room=${roomId}` : ''}`);
+          handleNavigate(roomId ? `party?room=${roomId}&id=${id}&type=${type}` : `watch?type=${type}&id=${id}`);
         }}
       />
 
