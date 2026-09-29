@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Crown, Instagram, Sparkles, Lock, User } from 'lucide-react';
+import { Film, Crown, Instagram, Sparkles, Lock, User, Cookie, Shield, FileText } from 'lucide-react';
 import { OwnerLockManagerModal } from './OwnerLockManagerModal';
 
 interface FooterProps {
@@ -80,9 +80,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </a>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 my-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 my-10">
 
-            <div className="space-y-4">
+            <div className="space-y-4 sm:col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('home')}>
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-[#00d2ff] p-0.5 flex items-center justify-center">
                   <div className="w-full h-full bg-black rounded-[10px] flex items-center justify-center">
@@ -94,6 +94,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <p className="text-xs text-slate-400 leading-relaxed">
                 Personal high-definition streaming portal. Stream thousands of movies & TV series with zero ads.
               </p>
+              <div className="text-[11px] text-slate-500 font-medium">
+                Zero media files hosted • External embeds only
+              </div>
             </div>
 
             <div>
@@ -143,6 +146,38 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </ul>
             </div>
 
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">Legal & Privacy</h4>
+              <ul className="space-y-2 text-xs text-slate-400">
+                <li>
+                  <button onClick={() => onNavigate('terms')} className="hover:text-[#00d2ff] transition-colors flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-[#00d2ff]" />
+                    <span>Terms of Service</span>
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => onNavigate('privacy')} className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Privacy Policy</span>
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => onNavigate('cookies')} className="hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                    <Cookie className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Cookie Policy</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => window.dispatchEvent(new Event('open-cookie-banner'))}
+                    className="hover:text-amber-300 transition-colors flex items-center gap-1.5 text-amber-400/90 font-medium"
+                  >
+                    <span>Cookie Preferences</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-2">Platform Status</h4>
               <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs text-slate-300 space-y-1.5">
@@ -153,6 +188,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">Main Data Stored</span>
+                  <span className="text-emerald-400 font-bold">Nowhere (0%)</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px]">
                   <span className="text-slate-400">Firebase Database</span>
                   <span className="text-[#00d2ff] font-bold">Firestore Sync</span>
                 </div>
@@ -161,7 +200,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
 
           <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-            <div>© {new Date().getFullYear()} MovieBox. Personal Streaming Project by Arshh.</div>
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+              <div>© {new Date().getFullYear()} MovieBox. Personal Streaming Project by Arshh.</div>
+              <div className="hidden sm:inline text-slate-700">•</div>
+              <div className="flex items-center gap-3 text-[11px]">
+                <button onClick={() => onNavigate('terms')} className="hover:text-white transition-colors">Terms</button>
+                <span>•</span>
+                <button onClick={() => onNavigate('privacy')} className="hover:text-white transition-colors">Privacy</button>
+                <span>•</span>
+                <button onClick={() => onNavigate('cookies')} className="hover:text-white transition-colors">Cookies</button>
+              </div>
+            </div>
             <div className="flex items-center gap-4 sm:gap-6">
               <button
                 onClick={() => onNavigate('profile')}

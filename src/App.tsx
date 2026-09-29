@@ -26,8 +26,12 @@ import { AuthPage } from './pages/AuthPage';
 import { AdminPage } from './pages/AdminPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { TermsPage } from './pages/TermsPage';
+import { PrivacyPage } from './pages/PrivacyPage';
+import { CookiePolicyPage } from './pages/CookiePolicyPage';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { CookieBanner } from './components/CookieBanner';
 import { subscribeToSystemSettings } from './services/firestoreSync';
 
 import { AmbientPlayer } from './components/AmbientPlayer';
@@ -167,6 +171,13 @@ export function App() {
         return <LeaderboardPage onNavigate={handleNavigate} onOpenTrivia={() => setTriviaOpen(true)} />;
       case 'admin':
         return <AdminPage onNavigate={handleNavigate} />;
+      case 'terms':
+        return <TermsPage onNavigate={handleNavigate} />;
+      case 'privacy':
+        return <PrivacyPage onNavigate={handleNavigate} />;
+      case 'cookies':
+      case 'cookie-policy':
+        return <CookiePolicyPage onNavigate={handleNavigate} />;
       default:
         return <NotFoundPage onNavigate={handleNavigate} />;
     }
@@ -247,6 +258,10 @@ export function App() {
 
       <MobileBottomNav
         currentRoute={route}
+        onNavigate={handleNavigate}
+      />
+
+      <CookieBanner
         onNavigate={handleNavigate}
       />
 
