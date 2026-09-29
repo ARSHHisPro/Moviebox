@@ -8,7 +8,14 @@ interface AdminPageProps {
   onNavigate: (route: string) => void;
 }
 
-import { getAnnouncementConfig, setAnnouncementConfig } from '../services/firestoreSync';
+import { 
+  getAnnouncementConfig, 
+  setAnnouncementConfig, 
+  getSystemSettings, 
+  updateSystemSettings, 
+  getFirestoreUsers, 
+  SystemSettings 
+} from '../services/firestoreSync';
 
 const DEFAULT_NEWS = [
   {
@@ -60,12 +67,10 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
   const [showPassInput, setShowPassInput] = useState(false);
   const [isSavingPass, setIsSavingPass] = useState(false);
 
-  const mockUsers = [
-    { id: '1', name: 'Alex Rivers', email: 'alex@moviebox.io', role: 'admin', status: 'Active' },
-    { id: '2', name: 'Sophia Chen', email: 'sophia@moviebox.io', role: 'vip', status: 'Active' },
-    { id: '3', name: 'Marcus Vance', email: 'marcus@moviebox.io', role: 'user', status: 'Active' },
-    { id: '4', name: 'David Miller', email: 'david@test.com', role: 'user', status: 'Suspended' },
-  ];
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   useEffect(() => {
     if (!authenticated) return;
@@ -85,6 +90,29 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
         const pass = await getAdminPasswordFromFirestore();
         if (pass) setAdminPasswordInput(pass);
       } catch {
+      }
+
+      try {
+        const settings = await getSystemSettings();
+        setSystemSettings(settings);
+      } catch {
+      }
+
+      try {
+        setIsLoadingUsers(true);
+        const users = await getFirestoreUsers();
+        if (users && users.length > 0) {
+          setUsersList(users);
+        } else {
+          setUsersList([
+            { id: 'demo', name: 'Demo User', email: 'demo@moviebox.app', role: 'user', status: 'Active' },
+            { id: '1', name: 'Alex Rivers', email: 'alex@moviebox.io', role: 'admin', status: 'Active' },
+            { id: '2', name: 'Sophia Chen', email: 'sophia@moviebox.io', role: 'vip', status: 'Active' }
+          ]);
+        }
+      } catch {
+      } finally {
+        setIsLoadingUsers(false);
       }
 
       loadNews();
@@ -156,6 +184,24 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
       toast.error('Failed to update password');
     } finally {
       setIsSavingPass(false);
+    }
+  };
+
+  const handleSaveSystemSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!systemSettings) return;
+    setIsSavingSettings(true);
+    try {
+      const ok = await updateSystemSettings(systemSettings);
+      if (ok) {
+        toast.success('System settings saved to Firestore (/config/settings)!');
+      } else {
+        toast.error('Failed to update system settings');
+      }
+    } catch {
+      toast.error('Failed to update system settings');
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -406,37 +452,67 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
       )}
 
       {activeTab === 'users' && (
-        <div className="glass-panel p-6 rounded-3xl border border-white/10 overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="border-b border-white/10 uppercase text-[10px] text-slate-400 font-bold">
-              <tr>
-                <th className="pb-3">User Name</th>
-                <th className="pb-3">Email</th>
-                <th className="pb-3">Role</th>
-                <th className="pb-3">Status</th>
-                <th className="pb-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {mockUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-white/5 transition-colors">
-                  <td className="py-3.5 font-bold text-white">{u.name}</td>
-                  <td className="py-3.5 text-slate-400">{u.email}</td>
-                  <td className="py-3.5 font-bold uppercase text-[var(--color-primary)]">{u.role}</td>
-                  <td className="py-3.5">
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">
-                      {u.status}
-                    </span>
-                  </td>
-                  <td className="py-3.5 text-right space-x-2">
-                    <button className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold">
-                      Edit
-                    </button>
-                  </td>
+        <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+            <div>
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-[var(--color-primary)]" />
+                Firestore User Accounts ({usersList.length})
+              </h3>
+              <p className="text-xs text-slate-400">Directly synchronized with the <code className="text-cyan-400 bg-white/5 px-1.5 py-0.5 rounded">/users</code> collection in Firestore.</p>
+            </div>
+            <button
+              onClick={async () => {
+                setIsLoadingUsers(true);
+                const u = await getFirestoreUsers();
+                if (u.length > 0) setUsersList(u);
+                setIsLoadingUsers(false);
+                toast.success('Users refreshed from Firestore');
+              }}
+              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold flex items-center gap-1.5 cursor-pointer text-slate-300"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+              Sync Users
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-300">
+              <thead className="border-b border-white/10 uppercase text-[10px] text-slate-400 font-bold">
+                <tr>
+                  <th className="pb-3">User Profile</th>
+                  <th className="pb-3">Email</th>
+                  <th className="pb-3">Role</th>
+                  <th className="pb-3">Status</th>
+                  <th className="pb-3 text-right">Firestore UID</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {usersList.map((u) => (
+                  <tr key={u.id} className="hover:bg-white/5 transition-colors">
+                    <td className="py-3.5 font-bold text-white flex items-center gap-2.5">
+                      <img
+                        src={u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=00d2ff&color=fff`}
+                        alt={u.name}
+                        className="w-7 h-7 rounded-lg object-cover border border-white/10"
+                      />
+                      <span>{u.name}</span>
+                    </td>
+                    <td className="py-3.5 text-slate-400 font-mono text-[11px]">{u.email}</td>
+                    <td className="py-3.5 font-bold uppercase text-[var(--color-primary)]">{u.role}</td>
+                    <td className="py-3.5">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">
+                        {u.status || 'Active'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 text-right font-mono text-[10px] text-slate-500 truncate max-w-[120px]">
+                      {u.id}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -448,7 +524,7 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
             </div>
             <h2 className="text-xl font-bold text-white">Admin Terminal Passcode</h2>
             <p className="text-xs text-slate-400 mt-1">
-              Connected directly to Firestore at <span className="font-mono text-cyan-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">/config/Admin panel &gt; password</span>.
+              Connected directly to Firestore at <span className="font-mono text-cyan-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">/config/admin</span> and <span className="font-mono text-cyan-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">/config/Admin panel</span>.
             </p>
           </div>
 
@@ -494,6 +570,127 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
 
       {activeTab === 'system' && (
         <div className="space-y-6">
+          {/* Firestore /config/settings Panel */}
+          {systemSettings && (
+            <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-[var(--color-primary)]" />
+                    Global System Configuration
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Synced in real-time with Firestore document at <span className="font-mono text-cyan-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">/config/settings</span>
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveSystemSettings} className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
+                      Application Name (appName)
+                    </label>
+                    <input
+                      type="text"
+                      value={systemSettings.appName || ''}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, appName: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[var(--color-primary)] font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
+                      Production Web App URL (appUrl)
+                    </label>
+                    <input
+                      type="url"
+                      value={systemSettings.appUrl || ''}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, appUrl: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[var(--color-primary)] font-mono text-[11px]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
+                      Max Continue Watching
+                    </label>
+                    <input
+                      type="number"
+                      value={systemSettings.maxContinueWatching || 50}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, maxContinueWatching: Number(e.target.value) })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[var(--color-primary)] font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
+                      Max Playlists Per User
+                    </label>
+                    <input
+                      type="number"
+                      value={systemSettings.maxPlaylistsPerUser || 20}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, maxPlaylistsPerUser: Number(e.target.value) })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[var(--color-primary)] font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
+                      Max Watch History
+                    </label>
+                    <input
+                      type="number"
+                      value={systemSettings.maxWatchHistory || 100}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, maxWatchHistory: Number(e.target.value) })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[var(--color-primary)] font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-black/40 border border-white/10">
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!systemSettings.allowRegistrations}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, allowRegistrations: e.target.checked })}
+                      className="w-4 h-4 rounded text-[var(--color-primary)] focus:ring-0"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-white block">Allow User Registrations</span>
+                      <span className="text-[10px] text-slate-400">Permit new users to create accounts</span>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!systemSettings.maintenanceMode}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, maintenanceMode: e.target.checked })}
+                      className="w-4 h-4 rounded text-rose-500 focus:ring-0"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-white block">Maintenance Mode</span>
+                      <span className="text-[10px] text-slate-400">Lock site for general viewers</span>
+                    </div>
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSavingSettings}
+                  className="py-3 px-6 rounded-xl bg-gradient-to-r from-[var(--color-secondary)] to-[var(--color-primary)] text-white font-bold text-xs shadow-lg shadow-[var(--color-primary-glow)] hover:brightness-110 flex items-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  {isSavingSettings ? 'Saving to Firestore...' : 'Save Settings to Firestore'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Infrastructure Health Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
               <div className="text-xs text-slate-400 font-bold">TMDB API Cache Status</div>
@@ -503,12 +700,12 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
             <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
               <div className="text-xs text-slate-400 font-bold">Streaming Mirror 1</div>
               <div className="text-2xl font-extrabold text-emerald-400">Online (24ms)</div>
-              <div className="text-[11px] text-slate-500">Proxy Active</div>
+              <div className="text-[11px] text-slate-500">VidLink & VidSrc Active</div>
             </div>
             <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2">
-              <div className="text-xs text-slate-400 font-bold">Gemini AI Endpoint</div>
-              <div className="text-2xl font-extrabold text-[var(--color-primary)]">Ready</div>
-              <div className="text-[11px] text-slate-500">Connected & Fallback Active</div>
+              <div className="text-xs text-slate-400 font-bold">Firestore Sync Status</div>
+              <div className="text-2xl font-extrabold text-[var(--color-primary)]">Connected</div>
+              <div className="text-[11px] text-slate-500">Config, Users, Leaderboard Live</div>
             </div>
           </div>
         </div>

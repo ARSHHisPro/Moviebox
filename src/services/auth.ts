@@ -76,6 +76,9 @@ class AuthManager {
 
       await setDoc(userDocRef, {
         ...profileData,
+        displayName: profileData.username,
+        photoURL: profileData.avatar,
+        preferences: (profileData as any).preferences || { autoplay: true, quality: 'auto', theme: 'dark' },
         updatedAt: Date.now()
       }, { merge: true });
     } catch {
@@ -123,13 +126,17 @@ class AuthManager {
     let matched = false;
 
     try {
-      const snap = await getDoc(doc(db, 'config', 'Admin panel'));
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data && typeof data.password === 'string' && data.password === trimmed) {
+      const snapAdmin = await getDoc(doc(db, 'config', 'admin'));
+      if (snapAdmin.exists() && snapAdmin.data()?.password === trimmed) {
+        matched = true;
+      }
+      if (!matched) {
+        const snap = await getDoc(doc(db, 'config', 'Admin panel'));
+        if (snap.exists() && snap.data()?.password === trimmed) {
           matched = true;
         }
-      } else {
+      }
+      if (!matched) {
         const snapAlt = await getDoc(doc(db, 'config', 'admin_panel'));
         if (snapAlt.exists() && snapAlt.data()?.password === trimmed) {
           matched = true;
@@ -282,6 +289,11 @@ export async function signOut() {
 
 export async function getAdminPasswordFromFirestore(): Promise<string> {
   try {
+    const snapAdmin = await getDoc(doc(db, 'config', 'admin'));
+    if (snapAdmin.exists() && snapAdmin.data()?.password) {
+      localStorage.setItem('moviebox_admin_pass', snapAdmin.data().password);
+      return snapAdmin.data().password;
+    }
     const snap = await getDoc(doc(db, 'config', 'Admin panel'));
     if (snap.exists() && snap.data()?.password) {
       localStorage.setItem('moviebox_admin_pass', snap.data().password);
@@ -300,6 +312,7 @@ export async function updateAdminPasswordInFirestore(newPassword: string): Promi
   const trimmed = newPassword.trim();
   try {
     localStorage.setItem('moviebox_admin_pass', trimmed);
+    await setDoc(doc(db, 'config', 'admin'), { password: trimmed, updatedAt: Date.now() }, { merge: true });
     await setDoc(doc(db, 'config', 'Admin panel'), { password: trimmed, updatedAt: Date.now() }, { merge: true });
     return true;
   } catch {

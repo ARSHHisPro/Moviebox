@@ -1,6 +1,8 @@
 import confetti from 'canvas-confetti';
 import { toast } from './toast';
 import { api } from './api';
+import { db, auth, signInAnonymously } from './firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 export interface LockedMovie {
   tmdbId: number;
@@ -18,6 +20,7 @@ type LockListener = (locks: Record<number, LockedMovie>) => void;
 class LockStore {
   private locks: Record<number, LockedMovie> = {};
   private listeners: Set<LockListener> = new Set();
+  private unsubFirestore: (() => void) | null = null;
 
   constructor() {
     this.loadFromStorage();
@@ -41,9 +44,26 @@ class LockStore {
     } catch {
 
     }
+    this.notify();
   }
 
   private async initBackendSync() {
+    try {
+      if (auth && !auth.currentUser) {
+        await signInAnonymously(auth).catch(() => {});
+      }
+      const docRef = doc(db, 'config', 'locked_movies');
+      this.unsubFirestore = onSnapshot(docRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data && data.locks) {
+            this.locks = data.locks;
+            this.saveToStorage();
+          }
+        }
+      }, () => {});
+    } catch {}
+
     await this.syncFromBackend();
     setInterval(() => {
       this.syncFromBackend();
@@ -52,11 +72,20 @@ class LockStore {
 
   private async syncFromBackend() {
     try {
+      const docRef = doc(db, 'config', 'locked_movies');
+      const snap = await getDoc(docRef);
+      if (snap.exists() && snap.data()?.locks) {
+        this.locks = snap.data().locks;
+        this.saveToStorage();
+        return;
+      }
+    } catch {}
+
+    try {
       const data = await api.getLocks();
       if (data && data.locks) {
         this.locks = data.locks;
         this.saveToStorage();
-        this.notify();
       }
     } catch {
 
@@ -65,7 +94,14 @@ class LockStore {
 
   private async syncToBackend() {
     this.saveToStorage();
-    this.notify();
+    try {
+      if (auth && !auth.currentUser) {
+        await signInAnonymously(auth).catch(() => {});
+      }
+      const docRef = doc(db, 'config', 'locked_movies');
+      await setDoc(docRef, { locks: this.locks, lastUpdated: Date.now() }, { merge: true });
+    } catch {}
+
     try {
       await api.setLock({ locks: this.locks, lastUpdated: Date.now() });
     } catch {

@@ -114,6 +114,11 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                     Trending Now
                   </button>
                 </li>
+                <li>
+                  <button onClick={() => onNavigate('leaderboard')} className="hover:text-[#00d2ff] transition-colors flex items-center gap-1 font-bold text-amber-400">
+                    Leaderboard & Trivia
+                  </button>
+                </li>
               </ul>
             </div>
 

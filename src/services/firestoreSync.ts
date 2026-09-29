@@ -546,38 +546,248 @@ export async function setAnnouncementConfig(announcement: AnnouncementConfig): P
   }
 }
 
+export interface SystemSettings {
+  allowRegistrations: boolean;
+  appName: string;
+  appUrl: string;
+  maintenanceMode: boolean;
+  maxContinueWatching: number;
+  maxPlaylistsPerUser: number;
+  maxWatchHistory: number;
+  updatedAt: number;
+}
+
+const DEFAULT_SETTINGS: SystemSettings = {
+  allowRegistrations: true,
+  appName: "MovieBox Premium",
+  appUrl: "https://moviebox-premium-boxez.vercel.app",
+  maintenanceMode: false,
+  maxContinueWatching: 50,
+  maxPlaylistsPerUser: 20,
+  maxWatchHistory: 100,
+  updatedAt: Date.now()
+};
+
+export async function getSystemSettings(): Promise<SystemSettings> {
+  try {
+    await ensureAuth();
+    const docRef = doc(db, 'config', 'settings');
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data() as SystemSettings;
+      localStorage.setItem('moviebox_system_settings', JSON.stringify(data));
+      return { ...DEFAULT_SETTINGS, ...data };
+    }
+  } catch {}
+
+  try {
+    const local = localStorage.getItem('moviebox_system_settings');
+    if (local) return JSON.parse(local);
+  } catch {}
+
+  return DEFAULT_SETTINGS;
+}
+
+export async function updateSystemSettings(updates: Partial<SystemSettings>): Promise<boolean> {
+  try {
+    await ensureAuth();
+    const docRef = doc(db, 'config', 'settings');
+    const merged = { ...updates, updatedAt: Date.now() };
+    await setDoc(docRef, cleanFirestoreData(merged), { merge: true });
+    localStorage.setItem('moviebox_system_settings', JSON.stringify(merged));
+    window.dispatchEvent(new Event('moviebox_settings_updated'));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function subscribeToSystemSettings(callback: (settings: SystemSettings) => void): () => void {
+  try {
+    const docRef = doc(db, 'config', 'settings');
+    return onSnapshot(docRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as SystemSettings;
+        localStorage.setItem('moviebox_system_settings', JSON.stringify(data));
+        callback({ ...DEFAULT_SETTINGS, ...data });
+      }
+    });
+  } catch {
+    getSystemSettings().then(callback);
+    return () => {};
+  }
+}
+
+const SEED_LEADERBOARD_ENTRIES: Omit<LeaderboardEntry, 'id'>[] = [
+  {
+    userId: 'demo',
+    username: 'MovieBuff',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+    score: 1850,
+    streak: 14,
+    rankTitle: 'Grand Cinephile',
+    updatedAt: Date.now() - 3600000
+  },
+  {
+    userId: 'cine_sophia',
+    username: 'Sophia Chen',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+    score: 1620,
+    streak: 11,
+    rankTitle: 'Master Director',
+    updatedAt: Date.now() - 7200000
+  },
+  {
+    userId: 'marcus_v',
+    username: 'Marcus Vance',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
+    score: 1400,
+    streak: 8,
+    rankTitle: 'Film Critic Legend',
+    updatedAt: Date.now() - 14400000
+  },
+  {
+    userId: 'retro_alex',
+    username: 'Alex Rivers',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+    score: 1150,
+    streak: 6,
+    rankTitle: 'Sci-Fi Maestro',
+    updatedAt: Date.now() - 28800000
+  },
+  {
+    userId: 'blockbuster_hero',
+    username: 'Peter Parker',
+    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100',
+    score: 950,
+    streak: 4,
+    rankTitle: 'Cinema Scout',
+    updatedAt: Date.now() - 86400000
+  }
+];
+
 export async function getLeaderboardTop(): Promise<LeaderboardEntry[]> {
   try {
-    const data = await api.getLeaderboard();
-    return (data?.entries || []).map((e: any) => ({ id: e.id, ...e }));
+    await ensureAuth();
+    const snap = await getDocs(collection(db, 'leaderboard'));
+    if (!snap.empty) {
+      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as LeaderboardEntry));
+      items.sort((a, b) => (b.score || 0) - (a.score || 0));
+      return items;
+    }
+
+    // Seed Firestore leaderboard if empty so it will never be empty again
+    for (const seed of SEED_LEADERBOARD_ENTRIES) {
+      try {
+        await setDoc(doc(db, 'leaderboard', seed.userId), cleanFirestoreData(seed));
+      } catch {}
+    }
+
+    return SEED_LEADERBOARD_ENTRIES.map((s, idx) => ({ id: s.userId || `seed-${idx}`, ...s }));
   } catch {
-    return [];
+    try {
+      const data = await api.getLeaderboard();
+      if (data?.entries && data.entries.length > 0) {
+        return (data.entries || []).map((e: any) => ({ id: e.id, ...e }));
+      }
+    } catch {}
+    return SEED_LEADERBOARD_ENTRIES.map((s, idx) => ({ id: s.userId || `seed-${idx}`, ...s }));
   }
 }
 
 export async function submitTriviaScore(entry: Omit<LeaderboardEntry, 'id'>) {
   try {
+    await ensureAuth();
+    const docId = entry.userId || `user_${Date.now()}`;
+    await setDoc(
+      doc(db, 'leaderboard', docId),
+      cleanFirestoreData({
+        ...entry,
+        id: docId,
+        updatedAt: Date.now()
+      }),
+      { merge: true }
+    );
+  } catch {}
+
+  try {
     await api.submitTriviaScore(entry);
+  } catch {}
+}
+
+export function subscribeToLeaderboard(callback: (entries: LeaderboardEntry[]) => void): () => void {
+  try {
+    const colRef = collection(db, 'leaderboard');
+    return onSnapshot(colRef, (snap) => {
+      if (!snap.empty) {
+        const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as LeaderboardEntry));
+        items.sort((a, b) => (b.score || 0) - (a.score || 0));
+        callback(items);
+      } else {
+        getLeaderboardTop().then(callback);
+      }
+    }, () => {
+      getLeaderboardTop().then(callback);
+    });
   } catch {
+    getLeaderboardTop().then(callback);
+    return () => {};
   }
 }
 
-export function subscribeToMediaReviews(mediaId: number, callback: (reviews: CommunityReview[]) => void) {
-  let active = true;
-  const fetchReviews = async () => {
-    try {
-      const reviews = await getMediaReviews(mediaId);
-      if (active) callback(reviews);
-    } catch {
-      if (active) callback([]);
+export async function getFirestoreUsers(): Promise<any[]> {
+  try {
+    await ensureAuth();
+    const snap = await getDocs(collection(db, 'users'));
+    if (!snap.empty) {
+      return snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          name: data.displayName || data.username || d.id,
+          email: data.email || 'N/A',
+          role: data.isAdmin ? 'admin' : (data.isVip ? 'vip' : 'user'),
+          status: 'Active',
+          avatar: data.photoURL || data.avatar || '',
+          preferences: data.preferences,
+          createdAt: data.createdAt || Date.now(),
+        };
+      });
     }
-  };
+  } catch {}
+  return [];
+}
 
-  fetchReviews();
-  const interval = setInterval(fetchReviews, 10000);
+export function subscribeToMediaReviews(mediaId: number, callback: (reviews: CommunityReview[]) => void): () => void {
+  let unsubFirestore: (() => void) | null = null;
+  let active = true;
+
+  try {
+    const q = query(collection(db, 'reviews'), where('mediaId', '==', Number(mediaId)));
+    unsubFirestore = onSnapshot(q, (snap) => {
+      if (!active) return;
+      if (!snap.empty) {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as CommunityReview));
+        list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        callback(list);
+      } else {
+        getMediaReviews(mediaId).then((revs) => {
+          if (active) callback(revs);
+        });
+      }
+    }, () => {
+      getMediaReviews(mediaId).then((revs) => {
+        if (active) callback(revs);
+      });
+    });
+  } catch {
+    getMediaReviews(mediaId).then((revs) => {
+      if (active) callback(revs);
+    });
+  }
 
   return () => {
     active = false;
-    clearInterval(interval);
+    if (unsubFirestore) unsubFirestore();
   };
 }

@@ -24,9 +24,11 @@ import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuthPage } from './pages/AuthPage';
 import { AdminPage } from './pages/AdminPage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { WatchPartyPage } from './pages/WatchPartyPage';
 import { AnnouncementBar } from './components/AnnouncementBar';
+import { subscribeToSystemSettings } from './services/firestoreSync';
 
 import { AmbientPlayer } from './components/AmbientPlayer';
 import { WatchPartyModal } from './components/WatchPartyModal';
@@ -160,6 +162,8 @@ export function App() {
         return <SettingsPage onNavigate={handleNavigate} />;
       case 'auth':
         return <AuthPage onNavigate={handleNavigate} />;
+      case 'leaderboard':
+        return <LeaderboardPage onNavigate={handleNavigate} onOpenTrivia={() => setTriviaOpen(true)} />;
       case 'admin':
         return <AdminPage onNavigate={handleNavigate} />;
       case 'party':

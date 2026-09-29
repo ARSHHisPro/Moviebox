@@ -1,6 +1,8 @@
 import { FavoriteItem, WatchProgress, WatchHistoryItem, MediaItem, MediaType } from '../types';
 import { auth } from './auth';
 import { api } from './api';
+import { db } from './firebase';
+import { doc, setDoc, getDocs, collection, deleteDoc } from 'firebase/firestore';
 
 type Listener<T> = (items: T[]) => void;
 
@@ -73,19 +75,40 @@ class FavoritesStore extends SubscribedStore<FavoriteItem> {
       if (newUid !== this.currentUserId) {
         this.currentUserId = newUid;
         if (newUid) {
+          this.loadFromFirestore(newUid);
           this.syncToBackend();
         }
       }
     });
   }
 
+  private async loadFromFirestore(uid: string) {
+    try {
+      const snap = await getDocs(collection(db, 'users', uid, 'favorites'));
+      if (!snap.empty) {
+        const remoteFavorites = snap.docs.map((d) => d.data() as FavoriteItem);
+        const map = new Map<string, FavoriteItem>();
+        for (const item of [...this.items, ...remoteFavorites]) {
+          map.set(`${item.type}_${item.id}`, item);
+        }
+        this.setAll(Array.from(map.values()));
+      }
+    } catch {}
+  }
+
   private async syncToBackend() {
     if (!this.currentUserId) return;
     try {
       await api.updateUserData('favorites', null, { items: this.items, syncedAt: Date.now() }, 'replace');
-    } catch {
+    } catch {}
 
-    }
+    try {
+      const uid = this.currentUserId;
+      await setDoc(doc(db, 'users', uid), { favorites: this.items }, { merge: true });
+      for (const item of this.items.slice(0, 30)) {
+        await setDoc(doc(db, 'users', uid, 'favorites', `${item.type}_${item.id}`), item, { merge: true });
+      }
+    } catch {}
   }
 
   public isFavorite(id: number, type: MediaType): boolean {
@@ -100,6 +123,9 @@ class FavoritesStore extends SubscribedStore<FavoriteItem> {
       const updated = this.getAll().filter((f) => !(f.id === media.id && f.type === type));
       this.setAll(updated);
       this.syncToBackend();
+      if (this.currentUserId) {
+        deleteDoc(doc(db, 'users', this.currentUserId, 'favorites', `${type}_${media.id}`)).catch(() => {});
+      }
       return false;
     } else {
       const newItem: FavoriteItem = {
@@ -123,12 +149,41 @@ class FavoritesStore extends SubscribedStore<FavoriteItem> {
     const updated = this.getAll().filter((f) => !(f.id === id && f.type === type));
     this.setAll(updated);
     this.syncToBackend();
+    if (this.currentUserId) {
+      deleteDoc(doc(db, 'users', this.currentUserId, 'favorites', `${type}_${id}`)).catch(() => {});
+    }
   }
 }
 
 class ContinueWatchingStore extends SubscribedStore<WatchProgress> {
+  private currentUserId: string | null = null;
+
   constructor() {
     super('moviebox_continue_watching');
+    auth.subscribe((user) => {
+      const newUid = user ? user.uid : null;
+      if (newUid !== this.currentUserId) {
+        this.currentUserId = newUid;
+        if (newUid) {
+          this.loadFromFirestore(newUid);
+        }
+      }
+    });
+  }
+
+  private async loadFromFirestore(uid: string) {
+    try {
+      const snap = await getDocs(collection(db, 'users', uid, 'continue_watching'));
+      if (!snap.empty) {
+        const remoteItems = snap.docs.map((d) => d.data() as WatchProgress);
+        const map = new Map<string, WatchProgress>();
+        for (const item of [...this.items, ...remoteItems]) {
+          const key = `${item.type}_${item.id}_${item.season || 0}_${item.episode || 0}`;
+          map.set(key, item);
+        }
+        this.setAll(Array.from(map.values()));
+      }
+    } catch {}
   }
 
   public getById(id: number, type: MediaType, season?: number, episode?: number): WatchProgress | undefined {
@@ -155,6 +210,10 @@ class ContinueWatchingStore extends SubscribedStore<WatchProgress> {
 
     if (progressRatio > 0.95) {
       this.setAll(filtered);
+      if (this.currentUserId) {
+        const key = `${progressData.type}_${progressData.id}_${progressData.season || 0}_${progressData.episode || 0}`;
+        deleteDoc(doc(db, 'users', this.currentUserId, 'continue_watching', key)).catch(() => {});
+      }
       return;
     }
 
@@ -166,6 +225,13 @@ class ContinueWatchingStore extends SubscribedStore<WatchProgress> {
 
     const updated = [newItem, ...filtered].slice(0, 50);
     this.setAll(updated);
+
+    if (this.currentUserId) {
+      const uid = this.currentUserId;
+      const key = `${progressData.type}_${progressData.id}_${progressData.season || 0}_${progressData.episode || 0}`;
+      setDoc(doc(db, 'users', uid, 'continue_watching', key), newItem, { merge: true }).catch(() => {});
+      setDoc(doc(db, 'users', uid), { continue_watching: updated.slice(0, 20) }, { merge: true }).catch(() => {});
+    }
   }
 
   public removeItem(id: number, type: MediaType, season?: number, episode?: number) {
@@ -173,6 +239,12 @@ class ContinueWatchingStore extends SubscribedStore<WatchProgress> {
       (item) => !(item.id === id && item.type === type && (season === undefined || item.season === season) && (episode === undefined || item.episode === episode))
     );
     this.setAll(updated);
+
+    if (this.currentUserId) {
+      const key = `${type}_${id}_${season || 0}_${episode || 0}`;
+      deleteDoc(doc(db, 'users', this.currentUserId, 'continue_watching', key)).catch(() => {});
+      setDoc(doc(db, 'users', this.currentUserId), { continue_watching: updated }, { merge: true }).catch(() => {});
+    }
   }
 }
 

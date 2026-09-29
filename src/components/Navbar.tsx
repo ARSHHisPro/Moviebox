@@ -82,6 +82,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { route: 'tv', label: 'TV Shows', icon: Tv },
     { route: 'trending', label: 'Trending', icon: Flame },
     { route: 'genres', label: 'Genres', icon: Layers },
+    { route: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { route: 'top-rated', label: 'Top Rated', icon: SlidersHorizontal },
     { route: 'favorites', label: 'Favorites', icon: Heart },
     { route: 'continue-watching', label: 'Continue Watching', icon: PlayCircle },
