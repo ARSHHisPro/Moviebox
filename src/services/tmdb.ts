@@ -69,18 +69,15 @@ async function fetchFromTMDB<T>(endpoint: string, params: Record<string, string 
         }
       }
     } catch {
-      // Fallback to client environment variable
+      // Fallback to direct TMDB call via env key
     }
 
-    const apiKey = import.meta.env.VITE_TMDB_API_KEY || '';
-    if (!apiKey) {
-      throw new Error(`TMDB API Key missing. Please set VITE_TMDB_API_KEY.`);
-    }
+    const apiKey = import.meta.env.VITE_TMDB_KEY || '';
+    if (!apiKey) throw new Error('TMDB API Key not set. Add VITE_TMDB_KEY to environment variables.');
 
     const fallbackUrlObj = new URL(`https://api.themoviedb.org/3${endpoint}`);
     fallbackUrlObj.searchParams.append('api_key', apiKey);
     fallbackUrlObj.searchParams.append('language', 'en-US');
-
     Object.entries(params).forEach(([key, val]) => {
       if (val !== undefined && val !== null && val !== '') {
         fallbackUrlObj.searchParams.append(key, String(val));
@@ -99,11 +96,7 @@ async function fetchFromTMDB<T>(endpoint: string, params: Record<string, string 
           delay *= 2;
           continue;
         }
-
-        if (!response.ok) {
-          throw new Error(`TMDB error ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`TMDB error ${response.status}`);
         const data = await response.json();
         if (cache.size >= MAX_CACHE_ENTRIES) {
           const oldestKey = cache.keys().next().value;
@@ -119,11 +112,10 @@ async function fetchFromTMDB<T>(endpoint: string, params: Record<string, string 
       }
     }
 
-    throw new Error(`Failed to fetch from TMDB endpoint ${endpoint}`);
+    throw new Error(`Failed to fetch TMDB endpoint: ${endpoint}`);
   })();
 
   pendingRequests.set(fullUrl, requestPromise);
-
   try {
     const result = await requestPromise;
     return result;
@@ -134,8 +126,7 @@ async function fetchFromTMDB<T>(endpoint: string, params: Record<string, string 
 
 export const tmdb = {
   getTrending: async (type: 'all' | 'movie' | 'tv' = 'all', timeWindow: 'day' | 'week' = 'day', page = 1) => {
-    const res = await fetchFromTMDB<{ results: MediaItem[]; total_pages: number }>(`/trending/${type}/${timeWindow}`, { page });
-    return res;
+    return fetchFromTMDB<{ results: MediaItem[]; total_pages: number }>(`/trending/${type}/${timeWindow}`, { page });
   },
 
   getPopularMovies: (page = 1) => fetchFromTMDB<{ results: MediaItem[]; total_pages: number }>('/movie/popular', { page }),
@@ -160,7 +151,6 @@ export const tmdb = {
       else params['first_air_date.lte'] = `${filters.yearTo}-12-31`;
     }
     if (filters.ratingMin) params['vote_average.gte'] = filters.ratingMin;
-
     return fetchFromTMDB<{ results: MediaItem[]; total_pages: number }>(`/discover/${type}`, params);
   },
 
@@ -190,10 +180,7 @@ export const tmdb = {
       fetchFromTMDB<{ genres: Genre[] }>('/genre/movie/list'),
       fetchFromTMDB<{ genres: Genre[] }>('/genre/tv/list')
     ]);
-    return {
-      movieGenres: movieRes.genres || [],
-      tvGenres: tvRes.genres || []
-    };
+    return { movieGenres: movieRes.genres || [], tvGenres: tvRes.genres || [] };
   },
 
   getPersonDetails: async (id: number): Promise<Person> => {

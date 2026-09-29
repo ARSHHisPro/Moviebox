@@ -63,7 +63,7 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 
 const tmdbCache = new NodeCache({ stdTTL: 1800, checkperiod: 600 });
-const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY || '';
+const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.VITE_TMDB_KEY || '';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 
 async function proxyTMDB(endpoint: string, params: Record<string, string> = {}) {
@@ -90,12 +90,12 @@ async function proxyTMDB(endpoint: string, params: Record<string, string> = {}) 
 
 let adminDb: ReturnType<typeof getFirestore> | null = null;
 try {
-  if (!getApps().length && process.env.FIREBASE_PROJECT_ID) {
+  if (!getApps().length && process.env.FB_ADMIN_PROJECT_ID) {
     const adminApp = initializeApp({
       credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+        projectId: process.env.FB_ADMIN_PROJECT_ID,
+        clientEmail: process.env.FB_ADMIN_CLIENT_EMAIL,
+        privateKey: (process.env.FB_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
       }),
     });
     adminDb = getFirestore(adminApp);
@@ -125,8 +125,8 @@ async function requireAuth(req: express.Request, res: express.Response, next: ex
 
 app.get('/api/public-config', (_req, res) => {
   res.json({
-    projectId: process.env.FIREBASE_PROJECT_ID || 'moviebox-boxez',
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN || 'moviebox-boxez.firebaseapp.com',
+    projectId: process.env.FB_ADMIN_PROJECT_ID || 'moviebox-boxez',
+    authDomain: `${process.env.FB_ADMIN_PROJECT_ID || 'moviebox-boxez'}.firebaseapp.com`,
   });
 });
 
