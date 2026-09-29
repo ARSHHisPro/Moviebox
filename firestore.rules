@@ -8,14 +8,11 @@ service cloud.firestore {
     }
 
     match /watch_parties/{roomId} {
-      allow read: if true;
-      allow create, update: if request.auth != null;
-      allow delete: if request.auth != null && (request.auth.uid == resource.data.hostId || request.auth.token.admin == true);
+      allow read, write: if true;
     }
 
     match /config/{configId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.token.admin == true;
+      allow read, write: if true;
     }
 
     match /leaderboard/{userId} {

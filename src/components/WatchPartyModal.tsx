@@ -4,6 +4,8 @@ import { toast } from '../services/toast';
 import { createWatchPartyRoom, subscribeToWatchParty, updateWatchPartyState, WatchPartyRoom } from '../services/firestoreSync';
 import { getCurrentUser } from '../services/auth';
 
+import { tmdb } from '../services/tmdb';
+
 interface WatchPartyModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,6 +31,34 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
   const [chatText, setChatText] = useState<string>('');
   const [copied, setCopied] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [selectedMedia, setSelectedMedia] = useState(mediaItem);
+
+  useEffect(() => {
+    if (mediaItem) {
+      setSelectedMedia(mediaItem);
+      return;
+    }
+    if (!isOpen) return;
+
+    tmdb.getTrending('movie', 'day', 1).then((res) => {
+      const top = res.results?.[0];
+      if (top) {
+        setSelectedMedia({
+          id: top.id,
+          title: top.title || top.name || 'Featured Movie',
+          type: 'movie',
+          poster: top.poster_path ? `https://image.tmdb.org/t/p/w342${top.poster_path}` : null,
+        });
+      }
+    }).catch(() => {
+      setSelectedMedia({
+        id: 550,
+        title: 'Spider-Man: Brand New Day',
+        type: 'movie',
+        poster: 'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg'
+      });
+    });
+  }, [mediaItem, isOpen]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -41,10 +71,13 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
   if (!isOpen) return null;
 
   const handleCreateRoom = async () => {
-    if (!mediaItem) {
-      toast.error('Select a movie or TV show to start a Watch Party!');
-      return;
-    }
+    const targetMedia = selectedMedia || {
+      id: 550,
+      title: 'Spider-Man: Brand New Day',
+      type: 'movie',
+      poster: 'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg'
+    };
+
     setIsCreating(true);
     const currentUser = getCurrentUser();
     const hostId = currentUser ? currentUser.uid : 'guest-' + Date.now();
@@ -54,17 +87,17 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
       const code = await createWatchPartyRoom({
         hostId,
         hostName,
-        mediaId: mediaItem.id,
-        mediaType: mediaItem.type,
-        mediaTitle: mediaItem.title,
-        mediaPoster: mediaItem.poster,
+        mediaId: targetMedia.id,
+        mediaType: targetMedia.type as 'movie' | 'tv',
+        mediaTitle: targetMedia.title,
+        mediaPoster: targetMedia.poster,
         currentTime: 0,
         isPlaying: true,
         messages: [
           {
             id: '1',
             sender: 'System',
-            text: 'Watch Party initialized for "' + mediaItem.title + '"! Share room code to invite friends.',
+            text: 'Watch Party initialized for "' + targetMedia.title + '"! Share room code to invite friends.',
             time: Date.now()
           }
         ],
@@ -76,7 +109,7 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
       });
       setRoomId(code);
       toast.success(`Watch Party room ${code} generated!`);
-      onNavigateToWatch(mediaItem.id, mediaItem.type, code);
+      onNavigateToWatch(targetMedia.id, targetMedia.type as 'movie' | 'tv', code);
       onClose();
     } catch (e) {
       toast.error('Failed creating Watch Party room');
@@ -155,18 +188,18 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
 
         {!roomId ? (
           <div className="p-6 space-y-6">
-            {mediaItem && (
+            {selectedMedia && (
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4">
-                {mediaItem.poster ? (
-                  <img src={mediaItem.poster} alt={mediaItem.title} className="w-12 h-16 object-cover rounded-xl shadow-md" />
+                {selectedMedia.poster ? (
+                  <img src={selectedMedia.poster} alt={selectedMedia.title} className="w-12 h-16 object-cover rounded-xl shadow-md" />
                 ) : (
                   <div className="w-12 h-16 bg-slate-800 rounded-xl flex items-center justify-center">
                     <Tv className="w-6 h-6 text-slate-500" />
                   </div>
                 )}
                 <div>
-                  <h3 className="font-bold text-white text-sm">{mediaItem.title}</h3>
-                  <p className="text-xs text-slate-400 uppercase font-semibold mt-0.5">{mediaItem.type}</p>
+                  <h3 className="font-bold text-white text-sm">{selectedMedia.title}</h3>
+                  <p className="text-xs text-slate-400 uppercase font-semibold mt-0.5">{selectedMedia.type}</p>
                 </div>
               </div>
             )}

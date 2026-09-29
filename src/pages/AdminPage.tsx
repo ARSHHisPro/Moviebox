@@ -8,6 +8,41 @@ interface AdminPageProps {
   onNavigate: (route: string) => void;
 }
 
+import { getAnnouncementConfig, setAnnouncementConfig } from '../services/firestoreSync';
+
+const DEFAULT_NEWS = [
+  {
+    id: '1',
+    headline: 'Spider-Man: Brand New Day is getting re-released in cinemas across multiple countries',
+    category: 'Release',
+    date: 'Today',
+  },
+  {
+    id: '2',
+    headline: 'Avengers: Doomsday wraps principal photography ahead of May 2026 worldwide cinema release',
+    category: 'Production',
+    date: 'Today',
+  },
+  {
+    id: '3',
+    headline: "Peaky Blinders feature film begins filming in Birmingham with Cillian Murphy returning",
+    category: 'Production',
+    date: 'Today',
+  },
+  {
+    id: '4',
+    headline: 'The Dark Knight 4K Remaster confirmed for IMAX theatrical re-release later this year',
+    category: 'Release',
+    date: 'Today',
+  },
+  {
+    id: '5',
+    headline: 'James Gunn reveals first official teaser and plot details for DC Studios Superman reboot',
+    category: 'Exclusive',
+    date: 'Today',
+  },
+];
+
 export const AdminPage: React.FC<AdminPageProps> = () => {
   const [authenticated, setAuthenticated] = useState(isAdmin());
   const [passcode, setPasscode] = useState('');
@@ -18,7 +53,7 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
   const [announcementType, setAnnouncementType] = useState<'info' | 'warning' | 'alert' | 'promo'>('info');
   const [announcementActive, setAnnouncementActive] = useState(true);
   const [isSavingAnnouncement, setIsSavingAnnouncement] = useState(false);
-  const [newsList, setNewsList] = useState<any[]>([]);
+  const [newsList, setNewsList] = useState<any[]>(DEFAULT_NEWS);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
 
   const mockUsers = [
@@ -33,11 +68,11 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
 
     async function loadAdminData() {
       try {
-        const res = await api.getAnnouncement();
-        if (res?.announcement) {
-          setAnnouncementText(res.announcement.text || '');
-          setAnnouncementType(res.announcement.type || 'info');
-          setAnnouncementActive(res.announcement.active !== false);
+        const config = await getAnnouncementConfig();
+        if (config) {
+          setAnnouncementText(config.text || '');
+          setAnnouncementType(config.type || 'info');
+          setAnnouncementActive(config.active !== false);
         }
       } catch {
       }
@@ -52,8 +87,13 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
     setIsLoadingNews(true);
     try {
       const res = await api.getNews();
-      if (res?.news) setNewsList(res.news);
+      if (res?.news && Array.isArray(res.news) && res.news.length > 0) {
+        setNewsList(res.news);
+      } else {
+        setNewsList(DEFAULT_NEWS);
+      }
     } catch {
+      setNewsList(DEFAULT_NEWS);
     } finally {
       setIsLoadingNews(false);
     }
@@ -75,7 +115,11 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
     e.preventDefault();
     setIsSavingAnnouncement(true);
     try {
-      await api.setAnnouncement(announcementText.trim(), announcementType, announcementActive);
+      await setAnnouncementConfig({
+        text: announcementText.trim(),
+        type: announcementType,
+        active: announcementActive,
+      });
       toast.success('Announcement broadcast updated successfully!');
     } catch {
       toast.error('Failed to update announcement');

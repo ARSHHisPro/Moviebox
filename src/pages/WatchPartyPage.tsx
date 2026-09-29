@@ -48,6 +48,7 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
   const [copied, setCopied] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [mobileTab, setMobileTab] = useState<'details' | 'audience' | 'chat'>('chat');
+  const [selectedMedia, setSelectedMedia] = useState(mediaItem);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
@@ -63,6 +64,31 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
     : [];
   const participantCount = activeParticipants.length;
   const canBegin = participantCount >= 2;
+
+  useEffect(() => {
+    if (mediaItem) {
+      setSelectedMedia(mediaItem);
+      return;
+    }
+    tmdb.getTrending('movie', 'day', 1).then((res) => {
+      const top = res.results?.[0];
+      if (top) {
+        setSelectedMedia({
+          id: top.id,
+          title: top.title || top.name || 'Featured Movie',
+          type: 'movie',
+          poster: top.poster_path ? `https://image.tmdb.org/t/p/w342${top.poster_path}` : null,
+        });
+      }
+    }).catch(() => {
+      setSelectedMedia({
+        id: 550,
+        title: 'Spider-Man: Brand New Day',
+        type: 'movie',
+        poster: 'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg'
+      });
+    });
+  }, [mediaItem]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -85,8 +111,8 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
   }, [roomId, myId, myName]);
 
   useEffect(() => {
-    const targetId = roomData?.mediaId || mediaItem?.id;
-    const targetType = roomData?.mediaType || mediaItem?.type || 'movie';
+    const targetId = roomData?.mediaId || selectedMedia?.id;
+    const targetType = roomData?.mediaType || selectedMedia?.type || 'movie';
     if (!targetId) return;
 
     let isCurrent = true;
@@ -131,25 +157,28 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
   }, [roomId, handleLeave]);
 
   const handleCreateRoom = async () => {
-    if (!mediaItem) {
-      toast.error('Select a movie or TV show to start a Watch Party!');
-      return;
-    }
+    const target = selectedMedia || {
+      id: 550,
+      title: 'Spider-Man: Brand New Day',
+      type: 'movie' as const,
+      poster: 'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg'
+    };
+
     setIsCreating(true);
     try {
       const code = await createWatchPartyRoom({
         hostId: myId,
         hostName: myName,
-        mediaId: mediaItem.id,
-        mediaType: mediaItem.type,
-        mediaTitle: mediaItem.title,
-        mediaPoster: mediaItem.poster,
+        mediaId: target.id,
+        mediaType: target.type as 'movie' | 'tv',
+        mediaTitle: target.title,
+        mediaPoster: target.poster,
         currentTime: 0,
         isPlaying: true,
         messages: [{
           id: Date.now().toString(),
           sender: 'System',
-          text: `Watch party created for "${mediaItem.title}". Invite friends! Movie begins when 2 or more people join.`,
+          text: `Watch party created for "${target.title}". Invite friends! Movie begins when 2 or more people join.`,
           time: Date.now()
         }],
         participants: {
@@ -226,8 +255,8 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
   };
 
   const getStreamUrl = () => {
-    const targetId = roomData?.mediaId || mediaItem?.id;
-    const targetType = roomData?.mediaType || mediaItem?.type || 'movie';
+    const targetId = roomData?.mediaId || selectedMedia?.id;
+    const targetType = roomData?.mediaType || selectedMedia?.type || 'movie';
     if (!targetId) return '';
     if (targetType === 'movie') return `https://vidlink.pro/movie/${targetId}`;
     return `https://vidlink.pro/tv/${targetId}/1/1`;
@@ -256,18 +285,18 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
           </div>
 
           <div className="p-6 space-y-6">
-            {mediaItem && (
+            {selectedMedia && (
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4">
-                {mediaItem.poster ? (
-                  <img src={mediaItem.poster} alt={mediaItem.title} className="w-12 h-16 object-cover rounded-xl shadow-md" />
+                {selectedMedia.poster ? (
+                  <img src={selectedMedia.poster} alt={selectedMedia.title} className="w-12 h-16 object-cover rounded-xl shadow-md" />
                 ) : (
                   <div className="w-12 h-16 bg-slate-800 rounded-xl flex items-center justify-center">
                     <Tv className="w-6 h-6 text-slate-500" />
                   </div>
                 )}
                 <div>
-                  <h3 className="font-bold text-white text-sm">{mediaItem.title}</h3>
-                  <p className="text-xs text-slate-400 uppercase font-semibold mt-0.5">{mediaItem.type}</p>
+                  <h3 className="font-bold text-white text-sm">{selectedMedia.title}</h3>
+                  <p className="text-xs text-slate-400 uppercase font-semibold mt-0.5">{selectedMedia.type}</p>
                 </div>
               </div>
             )}
@@ -279,7 +308,7 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
                 <p className="text-xs text-slate-400">You control play, pause, and skips.</p>
                 <button
                   onClick={handleCreateRoom}
-                  disabled={isCreating || !mediaItem}
+                  disabled={isCreating || !selectedMedia}
                   className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-secondary)] to-[var(--color-primary)] text-white font-bold text-xs shadow-md hover:brightness-110 disabled:opacity-50 transition-all cursor-pointer"
                 >
                   {isCreating ? 'Creating Room...' : 'Host Room'}
