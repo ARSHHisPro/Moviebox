@@ -186,39 +186,53 @@ export async function createWatchPartyRoom(room: Omit<WatchPartyRoom, 'id'>): Pr
     updatedAt: Date.now(),
   });
 
-  try {
-    localStorage.setItem(`moviebox_room_${code}`, JSON.stringify(roomObj));
-    const ch = getPartyChannel(code);
-    ch?.postMessage({ type: 'UPDATE', room: roomObj });
-  } catch {
-  }
+  await ensureAuth();
+  const docRef = doc(db, 'watch_parties', code);
 
   try {
-    await ensureAuth();
-    const docRef = doc(db, 'watch_parties', code);
     await setDoc(docRef, roomObj);
   } catch (firestoreErr) {
     try {
-      await api.createWatchParty(roomObj);
+      await signInAnonymously(auth);
+      await setDoc(docRef, roomObj);
     } catch {
+      try {
+        await api.createWatchParty(roomObj);
+      } catch {
+      }
     }
   }
 
   return code;
 }
 
-export async function updateWatchPartyState(roomId: string, updates: Partial<WatchPartyRoom>) {
-  const cleanUpdates = cleanFirestoreData({ ...updates, updatedAt: Date.now() });
+export async function checkWatchPartyRoomExists(roomId: string): Promise<boolean> {
+  const code = roomId.trim().toUpperCase();
+  if (!code) return false;
+  await ensureAuth();
 
   try {
-    const local = localStorage.getItem(`moviebox_room_${roomId}`);
-    const existing = local ? JSON.parse(local) : {};
-    const merged = { ...existing, ...cleanUpdates, id: roomId };
-    localStorage.setItem(`moviebox_room_${roomId}`, JSON.stringify(merged));
-    const ch = getPartyChannel(roomId);
-    ch?.postMessage({ type: 'UPDATE', room: merged });
+    const docRef = doc(db, 'watch_parties', code);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return true;
+    }
   } catch {
   }
+
+  try {
+    const data = await api.getWatchParty(code);
+    if (data && (data.id || data.roomId)) {
+      return true;
+    }
+  } catch {
+  }
+
+  return false;
+}
+
+export async function updateWatchPartyState(roomId: string, updates: Partial<WatchPartyRoom>) {
+  const cleanUpdates = cleanFirestoreData({ ...updates, updatedAt: Date.now() });
 
   try {
     await ensureAuth();
@@ -234,13 +248,6 @@ export async function updateWatchPartyState(roomId: string, updates: Partial<Wat
 
 export async function deleteWatchPartyRoom(roomId: string) {
   try {
-    localStorage.removeItem(`moviebox_room_${roomId}`);
-    const ch = getPartyChannel(roomId);
-    ch?.postMessage({ type: 'DELETE', roomId });
-  } catch {
-  }
-
-  try {
     await ensureAuth();
     const docRef = doc(db, 'watch_parties', roomId);
     await deleteDoc(docRef);
@@ -252,17 +259,19 @@ export async function deleteWatchPartyRoom(roomId: string) {
   }
 }
 
-export async function joinWatchPartyRoom(roomId: string, userId: string, displayName: string) {
+export async function joinWatchPartyRoom(
+  roomId: string,
+  userId: string,
+  displayName: string
+): Promise<{ success: boolean; hostId?: string; error?: string }> {
+  const code = roomId.trim().toUpperCase();
+  if (!code) return { success: false, error: 'Room code cannot be empty' };
+
+  await ensureAuth();
   let existingRoom: WatchPartyRoom | null = null;
-  try {
-    const local = localStorage.getItem(`moviebox_room_${roomId}`);
-    if (local) existingRoom = JSON.parse(local);
-  } catch {
-  }
+  const docRef = doc(db, 'watch_parties', code);
 
   try {
-    await ensureAuth();
-    const docRef = doc(db, 'watch_parties', roomId);
     const snap = await getDoc(docRef);
     if (snap.exists()) {
       existingRoom = { id: snap.id, ...snap.data() } as WatchPartyRoom;
@@ -270,38 +279,51 @@ export async function joinWatchPartyRoom(roomId: string, userId: string, display
   } catch {
   }
 
-  if (existingRoom) {
-    const participants = existingRoom.participants || {};
-    participants[userId] = { displayName: displayName || 'Audience Member', joinedAt: Date.now(), isActive: true };
-    const activeCount = Object.keys(participants).filter((k) => participants[k]?.isActive).length;
-
-    const messages = existingRoom.messages || [];
-    const hasJoinedMsg = messages.some((m) => m.text.includes(`${displayName} joined the party`));
-    if (!hasJoinedMsg && userId !== existingRoom.hostId) {
-      messages.push({
-        id: Date.now().toString(),
-        sender: 'System',
-        text: `${displayName} joined the party!`,
-        time: Date.now(),
-      });
+  if (!existingRoom) {
+    try {
+      const data = await api.getWatchParty(code);
+      if (data && (data.id || data.roomId)) {
+        existingRoom = { id: data.id || data.roomId, ...data } as WatchPartyRoom;
+      }
+    } catch {
     }
+  }
 
-    const updates = {
-      participants,
-      participantCount: activeCount,
-      messages,
-      updatedAt: Date.now(),
+  if (!existingRoom) {
+    return {
+      success: false,
+      error: `Room code "${code}" does not exist in the database. Please verify the code with the host.`,
     };
-
-    await updateWatchPartyState(roomId, updates);
-    return { success: true, hostId: existingRoom.hostId };
   }
 
-  try {
-    return await api.joinWatchParty(roomId, userId, displayName);
-  } catch {
-    return { success: true };
+  const participants = existingRoom.participants || {};
+  participants[userId] = {
+    displayName: displayName || 'Audience Member',
+    joinedAt: Date.now(),
+    isActive: true,
+  };
+  const activeCount = Object.keys(participants).filter((k) => participants[k]?.isActive).length;
+
+  const messages = existingRoom.messages || [];
+  const hasJoinedMsg = messages.some((m) => m.text.includes(`${displayName} joined the party`));
+  if (!hasJoinedMsg && userId !== existingRoom.hostId) {
+    messages.push({
+      id: Date.now().toString(),
+      sender: 'System',
+      text: `${displayName} joined the party!`,
+      time: Date.now(),
+    });
   }
+
+  const updates = cleanFirestoreData({
+    participants,
+    participantCount: activeCount,
+    messages,
+    updatedAt: Date.now(),
+  });
+
+  await updateWatchPartyState(code, updates);
+  return { success: true, hostId: existingRoom.hostId };
 }
 
 export async function leaveWatchPartyRoom(roomId: string, userId: string) {
@@ -472,6 +494,7 @@ export function subscribeToWatchParty(roomId: string, callback: (room: WatchPart
 
 export async function getAnnouncementConfig(): Promise<AnnouncementConfig | null> {
   try {
+    await ensureAuth();
     const docRef = doc(db, 'config', 'announcement');
     const snap = await getDoc(docRef);
     if (snap.exists()) {
@@ -503,6 +526,7 @@ export async function getAnnouncementConfig(): Promise<AnnouncementConfig | null
 
 export async function setAnnouncementConfig(announcement: AnnouncementConfig): Promise<boolean> {
   try {
+    await ensureAuth();
     const docRef = doc(db, 'config', 'announcement');
     await setDoc(docRef, { ...announcement, updatedAt: Date.now() }, { merge: true });
     localStorage.setItem('moviebox_announcement', JSON.stringify(announcement));

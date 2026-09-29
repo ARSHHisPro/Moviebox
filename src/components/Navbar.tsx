@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Film, Tv, Heart, History, Flame, Sparkles, User, Settings, Menu, X, PlayCircle, Layers, SlidersHorizontal, LogIn, Users, Shuffle, Trophy } from 'lucide-react';
+import { Search, Film, Tv, Heart, History, Flame, Sparkles, User, Settings, Menu, X, PlayCircle, Layers, SlidersHorizontal, LogIn, Users, Shuffle, Trophy, Shield } from 'lucide-react';
 import { auth } from '../services/auth';
 import { UserProfile } from '../types';
 import { tmdb } from '../services/tmdb';
@@ -243,6 +243,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <Settings className="w-4 h-4" />
                   </button>
+
+                  {(user?.role === 'admin' || user?.isAdmin || auth.isCurrentAdmin()) && (
+                    <button
+                      onClick={() => onNavigate('admin')}
+                      title="Admin Command Center"
+                      className="px-2.5 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-rose-500/20 flex-shrink-0"
+                    >
+                      <Shield className="w-3.5 h-3.5 text-rose-400" />
+                      <span className="hidden sm:inline">Admin</span>
+                    </button>
+                  )}
                 </div>
               ) : (
                 <button
@@ -328,7 +339,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+          <div className="pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
             <button
               onClick={() => {
                 onNavigate('profile');
@@ -347,6 +358,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Settings className="w-4 h-4" /> Settings
             </button>
+            {(user?.role === 'admin' || user?.isAdmin || auth.isCurrentAdmin()) && (
+              <button
+                onClick={() => {
+                  onNavigate('admin');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="px-3 py-2 rounded-xl text-sm font-bold text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 cursor-pointer w-full"
+              >
+                <Shield className="w-4 h-4 text-rose-400" /> Admin Command Center
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, X, Send, Copy, Play, Pause, Tv, Sparkles, Check } from 'lucide-react';
 import { toast } from '../services/toast';
-import { createWatchPartyRoom, subscribeToWatchParty, updateWatchPartyState, WatchPartyRoom } from '../services/firestoreSync';
+import { createWatchPartyRoom, subscribeToWatchParty, updateWatchPartyState, checkWatchPartyRoomExists, WatchPartyRoom } from '../services/firestoreSync';
 import { getCurrentUser } from '../services/auth';
 
 import { tmdb } from '../services/tmdb';
@@ -121,12 +121,29 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
     }
   };
 
-  const handleJoinRoom = () => {
+  const [isJoining, setIsJoining] = useState<boolean>(false);
+
+  const handleJoinRoom = async () => {
     const code = joinInput.trim().toUpperCase();
-    if (!code) return;
-    toast.info(`Joining Watch Party room ${code}`);
-    onNavigateToWatch(0, 'movie', code);
-    onClose();
+    if (!code) {
+      toast.error('Please enter a 6-digit room code');
+      return;
+    }
+    setIsJoining(true);
+    try {
+      const exists = await checkWatchPartyRoomExists(code);
+      if (!exists) {
+        toast.error(`Watch Party room "${code}" was not found in the database! Please check the code.`);
+        return;
+      }
+      toast.success(`Joining Watch Party room ${code}!`);
+      onNavigateToWatch(0, 'movie', code);
+      onClose();
+    } catch {
+      toast.error('Error connecting to database');
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -233,10 +250,10 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
                 />
                 <button
                   onClick={handleJoinRoom}
-                  disabled={!joinInput.trim()}
-                  className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs disabled:opacity-50 transition-all"
+                  disabled={!joinInput.trim() || isJoining}
+                  className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs disabled:opacity-50 transition-all cursor-pointer"
                 >
-                  Join Room
+                  {isJoining ? 'Checking Database...' : 'Join Room'}
                 </button>
               </div>
             </div>

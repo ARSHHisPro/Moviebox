@@ -12,6 +12,7 @@ import {
   deleteWatchPartyRoom,
   joinWatchPartyRoom,
   leaveWatchPartyRoom,
+  checkWatchPartyRoomExists,
   WatchPartyRoom,
   WatchPartyParticipant
 } from '../services/firestoreSync';
@@ -200,12 +201,36 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
     }
   };
 
+  const [isJoining, setIsJoining] = useState(false);
+
   const handleJoinRoom = async () => {
     const code = joinInput.trim().toUpperCase();
-    if (!code) return;
-    setRoomId(code);
-    setPhase('room');
-    toast.info(`Joining room ${code}...`);
+    if (!code) {
+      toast.error('Please enter a 6-digit room code');
+      return;
+    }
+    setIsJoining(true);
+    try {
+      const exists = await checkWatchPartyRoomExists(code);
+      if (!exists) {
+        toast.error(`Watch Party room "${code}" does not exist in the database! Please verify the code.`);
+        return;
+      }
+
+      const res = await joinWatchPartyRoom(code, myId, myName);
+      if (!res.success) {
+        toast.error(res.error || `Could not join room ${code}`);
+        return;
+      }
+
+      setRoomId(code);
+      setPhase('room');
+      toast.success(`Joined room ${code}!`);
+    } catch {
+      toast.error('Error connecting to database');
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   const handleEndParty = async () => {
@@ -331,10 +356,10 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
                 />
                 <button
                   onClick={handleJoinRoom}
-                  disabled={!joinInput.trim()}
+                  disabled={!joinInput.trim() || isJoining}
                   className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs disabled:opacity-50 transition-all cursor-pointer"
                 >
-                  Join Party
+                  {isJoining ? 'Checking Database...' : 'Join Party'}
                 </button>
               </div>
             </div>
@@ -448,7 +473,6 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
                   className="w-full h-full border-0 select-none"
                   allowFullScreen
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-downloads"
                   referrerPolicy="origin"
                   style={{ pointerEvents: isHost ? 'auto' : 'none' }}
                   title={title}

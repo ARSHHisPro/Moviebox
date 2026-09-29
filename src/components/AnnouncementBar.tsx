@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Megaphone, X, ChevronRight, Newspaper, Flame, Sparkles } from 'lucide-react';
 import { getAnnouncementConfig, AnnouncementConfig } from '../services/firestoreSync';
 import { api } from '../services/api';
+import { db } from '../services/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 interface NewsItem {
   id: string;
@@ -69,6 +71,7 @@ export const AnnouncementBar: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
+    let unsubSnapshot: (() => void) | null = null;
 
     async function loadData() {
       try {
@@ -90,6 +93,19 @@ export const AnnouncementBar: React.FC = () => {
 
     loadData();
 
+    try {
+      unsubSnapshot = onSnapshot(doc(db, 'config', 'announcement'), (snap) => {
+        if (!isMounted) return;
+        if (snap.exists()) {
+          const data = snap.data() as AnnouncementConfig;
+          setAnnouncement(data);
+          try {
+            localStorage.setItem('moviebox_announcement', JSON.stringify(data));
+          } catch {}
+        }
+      });
+    } catch {}
+
     const handleUpdate = () => {
       loadData();
     };
@@ -99,6 +115,7 @@ export const AnnouncementBar: React.FC = () => {
 
     return () => {
       isMounted = false;
+      if (unsubSnapshot) unsubSnapshot();
       window.removeEventListener('moviebox_announcement_updated', handleUpdate);
       clearInterval(interval);
     };

@@ -501,7 +501,6 @@ export const Player: React.FC<PlayerProps> = ({
           className="w-full h-full border-0"
           allowFullScreen
           allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-downloads"
           referrerPolicy="origin"
           title={`Streaming ${title}`}
         />

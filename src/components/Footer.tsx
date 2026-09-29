@@ -173,19 +173,27 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
           <div className="mt-8 pt-4 border-t border-white/5 flex justify-center items-center">
             <button
-              onClick={() => setShowAdminModal(true)}
-              className="opacity-0 hover:opacity-100 transition-opacity duration-300 text-[10px] text-slate-500 hover:text-[#00d2ff] font-mono flex items-center gap-1.5 cursor-pointer py-1 px-3 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10"
-              title="Owner Secret Admin Key"
+              onClick={() => onNavigate('admin')}
+              className="text-[11px] text-rose-400 hover:text-rose-300 font-bold flex items-center gap-1.5 cursor-pointer py-1.5 px-3.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 transition-all mr-2"
+              title="Open Admin Command Center & Announcements"
             >
-              <Lock className="w-3 h-3 text-[#00d2ff]" />
-              <span>[ Owner Secret Admin & Movie Lock Manager ]</span>
+              <Lock className="w-3.5 h-3.5 text-rose-400" />
+              <span>Admin Panel & Announcements</span>
+            </button>
+            <button
+              onClick={() => setShowAdminModal(true)}
+              className="text-[11px] text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5 cursor-pointer py-1.5 px-3.5 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 transition-all"
+              title="Owner Secret Movie Lock Manager"
+            >
+              <Lock className="w-3.5 h-3.5 text-[#00d2ff]" />
+              <span>Movie Lock Manager</span>
             </button>
           </div>
 
         </div>
       </footer>
 
-      <OwnerLockManagerModal isOpen={showAdminModal} onClose={() => setShowAdminModal(false)} />
+      <OwnerLockManagerModal isOpen={showAdminModal} onClose={() => setShowAdminModal(false)} onNavigate={onNavigate} />
     </>
   );
 };
