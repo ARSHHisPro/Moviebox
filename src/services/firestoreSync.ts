@@ -1,5 +1,5 @@
 import { api } from './api';
-import { db } from './firebase';
+import { db, auth, signInAnonymously } from './firebase';
 import {
   doc,
   getDoc,
@@ -135,29 +135,98 @@ export async function addMediaReview(review: Omit<CommunityReview, 'id'>): Promi
   }
 }
 
-export async function createWatchPartyRoom(room: Omit<WatchPartyRoom, 'id'>): Promise<string> {
-  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+function cleanFirestoreData<T>(obj: T): T {
+  if (obj === undefined) return null as any;
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(cleanFirestoreData) as any;
+  }
+  const result: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      result[key] = cleanFirestoreData(value);
+    }
+  }
+  return result;
+}
+
+async function ensureAuth() {
   try {
-    const docRef = doc(db, 'watch_parties', code);
-    await setDoc(docRef, {
-      ...room,
-      id: code,
-      updatedAt: Date.now(),
-    });
-    return code;
+    if (auth && !auth.currentUser) {
+      await signInAnonymously(auth);
+    }
   } catch {
-    const data = await api.createWatchParty(room);
-    return data?.roomId || code;
   }
 }
 
-export async function updateWatchPartyState(roomId: string, updates: Partial<WatchPartyRoom>) {
+const partyChannels: Record<string, BroadcastChannel> = {};
+function getPartyChannel(roomId: string): BroadcastChannel | null {
+  if (typeof BroadcastChannel === 'undefined') return null;
+  if (!partyChannels[roomId]) {
+    try {
+      partyChannels[roomId] = new BroadcastChannel(`mb_wp_${roomId}`);
+    } catch {
+      return null;
+    }
+  }
+  return partyChannels[roomId];
+}
+
+export async function createWatchPartyRoom(room: Omit<WatchPartyRoom, 'id'>): Promise<string> {
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const roomObj: WatchPartyRoom = cleanFirestoreData({
+    ...room,
+    id: code,
+    mediaPoster: room.mediaPoster ?? null,
+    currentTime: room.currentTime ?? 0,
+    isPlaying: room.isPlaying ?? true,
+    messages: room.messages ?? [],
+    participants: room.participants ?? {},
+    participantCount: room.participantCount ?? 1,
+    updatedAt: Date.now(),
+  });
+
   try {
+    localStorage.setItem(`moviebox_room_${code}`, JSON.stringify(roomObj));
+    const ch = getPartyChannel(code);
+    ch?.postMessage({ type: 'UPDATE', room: roomObj });
+  } catch {
+  }
+
+  try {
+    await ensureAuth();
+    const docRef = doc(db, 'watch_parties', code);
+    await setDoc(docRef, roomObj);
+  } catch (firestoreErr) {
+    try {
+      await api.createWatchParty(roomObj);
+    } catch {
+    }
+  }
+
+  return code;
+}
+
+export async function updateWatchPartyState(roomId: string, updates: Partial<WatchPartyRoom>) {
+  const cleanUpdates = cleanFirestoreData({ ...updates, updatedAt: Date.now() });
+
+  try {
+    const local = localStorage.getItem(`moviebox_room_${roomId}`);
+    const existing = local ? JSON.parse(local) : {};
+    const merged = { ...existing, ...cleanUpdates, id: roomId };
+    localStorage.setItem(`moviebox_room_${roomId}`, JSON.stringify(merged));
+    const ch = getPartyChannel(roomId);
+    ch?.postMessage({ type: 'UPDATE', room: merged });
+  } catch {
+  }
+
+  try {
+    await ensureAuth();
     const docRef = doc(db, 'watch_parties', roomId);
-    await setDoc(docRef, { ...updates, updatedAt: Date.now() }, { merge: true });
+    await setDoc(docRef, cleanUpdates, { merge: true });
   } catch {
     try {
-      await api.updateWatchParty(roomId, updates);
+      await api.updateWatchParty(roomId, cleanUpdates);
     } catch {
     }
   }
@@ -165,6 +234,14 @@ export async function updateWatchPartyState(roomId: string, updates: Partial<Wat
 
 export async function deleteWatchPartyRoom(roomId: string) {
   try {
+    localStorage.removeItem(`moviebox_room_${roomId}`);
+    const ch = getPartyChannel(roomId);
+    ch?.postMessage({ type: 'DELETE', roomId });
+  } catch {
+  }
+
+  try {
+    await ensureAuth();
     const docRef = doc(db, 'watch_parties', roomId);
     await deleteDoc(docRef);
   } catch {
@@ -176,90 +253,185 @@ export async function deleteWatchPartyRoom(roomId: string) {
 }
 
 export async function joinWatchPartyRoom(roomId: string, userId: string, displayName: string) {
+  let existingRoom: WatchPartyRoom | null = null;
   try {
+    const local = localStorage.getItem(`moviebox_room_${roomId}`);
+    if (local) existingRoom = JSON.parse(local);
+  } catch {
+  }
+
+  try {
+    await ensureAuth();
     const docRef = doc(db, 'watch_parties', roomId);
     const snap = await getDoc(docRef);
     if (snap.exists()) {
-      const data = snap.data() as any;
-      const participants = data.participants || {};
-      participants[userId] = { displayName, joinedAt: Date.now(), isActive: true };
-      const activeCount = Object.keys(participants).filter((k) => participants[k].isActive).length;
-      await setDoc(docRef, {
-        participants,
-        participantCount: activeCount,
-        updatedAt: Date.now(),
-      }, { merge: true });
-      return { success: true, hostId: data.hostId };
+      existingRoom = { id: snap.id, ...snap.data() } as WatchPartyRoom;
     }
   } catch {
+  }
+
+  if (existingRoom) {
+    const participants = existingRoom.participants || {};
+    participants[userId] = { displayName: displayName || 'Audience Member', joinedAt: Date.now(), isActive: true };
+    const activeCount = Object.keys(participants).filter((k) => participants[k]?.isActive).length;
+
+    const messages = existingRoom.messages || [];
+    const hasJoinedMsg = messages.some((m) => m.text.includes(`${displayName} joined the party`));
+    if (!hasJoinedMsg && userId !== existingRoom.hostId) {
+      messages.push({
+        id: Date.now().toString(),
+        sender: 'System',
+        text: `${displayName} joined the party!`,
+        time: Date.now(),
+      });
+    }
+
+    const updates = {
+      participants,
+      participantCount: activeCount,
+      messages,
+      updatedAt: Date.now(),
+    };
+
+    await updateWatchPartyState(roomId, updates);
+    return { success: true, hostId: existingRoom.hostId };
   }
 
   try {
     return await api.joinWatchParty(roomId, userId, displayName);
   } catch {
-    return null;
+    return { success: true };
   }
 }
 
 export async function leaveWatchPartyRoom(roomId: string, userId: string) {
+  let existingRoom: WatchPartyRoom | null = null;
   try {
+    const local = localStorage.getItem(`moviebox_room_${roomId}`);
+    if (local) existingRoom = JSON.parse(local);
+  } catch {
+  }
+
+  try {
+    await ensureAuth();
     const docRef = doc(db, 'watch_parties', roomId);
     const snap = await getDoc(docRef);
-    if (!snap.exists()) return { success: true };
-
-    const data = snap.data() as any;
-    const participants = data.participants || {};
-    if (participants[userId]) {
-      participants[userId].isActive = false;
+    if (snap.exists()) {
+      existingRoom = { id: snap.id, ...snap.data() } as WatchPartyRoom;
     }
-
-    const activeList = Object.keys(participants).filter((k) => participants[k].isActive);
-    if (activeList.length === 0) {
-      await deleteDoc(docRef);
-      return { success: true, roomDeleted: true };
-    }
-
-    let newHostId = data.hostId;
-    let newHostName = data.hostName;
-    let messages = data.messages || [];
-
-    if (data.hostId === userId && activeList.length > 0) {
-      newHostId = activeList[0];
-      newHostName = participants[newHostId]?.displayName || 'New Host';
-      messages = [
-        ...messages,
-        {
-          id: Date.now().toString(),
-          sender: 'System',
-          text: `${newHostName} is now the host.`,
-          time: Date.now(),
-        },
-      ];
-    }
-
-    await setDoc(docRef, {
-      hostId: newHostId,
-      hostName: newHostName,
-      participants,
-      participantCount: activeList.length,
-      messages,
-      updatedAt: Date.now(),
-    }, { merge: true });
-
-    return { success: true, newHostId };
   } catch {
   }
 
-  try {
-    return await api.leaveWatchParty(roomId, userId);
-  } catch {
-    return null;
+  if (!existingRoom) {
+    try {
+      return await api.leaveWatchParty(roomId, userId);
+    } catch {
+      return { success: true };
+    }
   }
+
+  const participants = existingRoom.participants || {};
+  if (participants[userId]) {
+    participants[userId].isActive = false;
+  }
+
+  const activeList = Object.keys(participants).filter((k) => participants[k]?.isActive);
+  if (activeList.length === 0) {
+    await deleteWatchPartyRoom(roomId);
+    return { success: true, roomDeleted: true };
+  }
+
+  let newHostId = existingRoom.hostId;
+  let newHostName = existingRoom.hostName;
+  let messages = existingRoom.messages || [];
+
+  if (existingRoom.hostId === userId && activeList.length > 0) {
+    newHostId = activeList[0];
+    newHostName = participants[newHostId]?.displayName || 'New Host';
+    messages = [
+      ...messages,
+      {
+        id: Date.now().toString(),
+        sender: 'System',
+        text: `${newHostName} is now the host.`,
+        time: Date.now(),
+      },
+    ];
+  }
+
+  const updates = {
+    hostId: newHostId,
+    hostName: newHostName,
+    participants,
+    participantCount: activeList.length,
+    messages,
+    updatedAt: Date.now(),
+  };
+
+  await updateWatchPartyState(roomId, updates);
+  return { success: true, newHostId };
 }
 
 export function subscribeToWatchParty(roomId: string, callback: (room: WatchPartyRoom | null) => void) {
   let unsubFirestore: (() => void) | null = null;
   let active = true;
+
+  try {
+    const local = localStorage.getItem(`moviebox_room_${roomId}`);
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (parsed) callback(parsed);
+    }
+  } catch {
+  }
+
+  const ch = getPartyChannel(roomId);
+  const handleBroadcast = (e: MessageEvent) => {
+    if (!active) return;
+    if (e.data?.type === 'UPDATE' && e.data.room) {
+      callback(e.data.room);
+    } else if (e.data?.type === 'DELETE') {
+      callback(null);
+    }
+  };
+  ch?.addEventListener('message', handleBroadcast);
+
+  const handleStorage = (e: StorageEvent) => {
+    if (!active) return;
+    if (e.key === `moviebox_room_${roomId}`) {
+      if (e.newValue) {
+        try {
+          callback(JSON.parse(e.newValue));
+        } catch {
+        }
+      } else {
+        callback(null);
+      }
+    }
+  };
+  window.addEventListener('storage', handleStorage);
+
+  let pollInterval: any = null;
+  function startPolling() {
+    if (pollInterval) return;
+    const fetchRoom = async () => {
+      if (!active) return;
+      try {
+        const data = await api.getWatchParty(roomId);
+        if (data && active) {
+          const room = { id: data.id || roomId, ...data } as WatchPartyRoom;
+          try {
+            localStorage.setItem(`moviebox_room_${roomId}`, JSON.stringify(room));
+          } catch {
+          }
+          callback(room);
+        }
+      } catch {
+      }
+    };
+    fetchRoom();
+    pollInterval = setInterval(fetchRoom, 2500);
+  }
 
   try {
     const docRef = doc(db, 'watch_parties', roomId);
@@ -268,36 +440,33 @@ export function subscribeToWatchParty(roomId: string, callback: (room: WatchPart
       (snap) => {
         if (!active) return;
         if (snap.exists()) {
-          callback({ id: snap.id, ...snap.data() } as WatchPartyRoom);
+          const roomData = { id: snap.id, ...snap.data() } as WatchPartyRoom;
+          try {
+            localStorage.setItem(`moviebox_room_${roomId}`, JSON.stringify(roomData));
+          } catch {
+          }
+          callback(roomData);
         } else {
-          callback(null);
+          const local = localStorage.getItem(`moviebox_room_${roomId}`);
+          if (!local) {
+            callback(null);
+          }
         }
       },
       () => {
-        pollFallback();
+        startPolling();
       }
     );
   } catch {
-    pollFallback();
-  }
-
-  function pollFallback() {
-    const fetchRoom = async () => {
-      try {
-        const data = await api.getWatchParty(roomId);
-        if (active) callback(data ? ({ id: data.id, ...data } as WatchPartyRoom) : null);
-      } catch {
-        if (active) callback(null);
-      }
-    };
-    fetchRoom();
-    const interval = setInterval(fetchRoom, 2500);
-    return () => clearInterval(interval);
+    startPolling();
   }
 
   return () => {
     active = false;
     if (unsubFirestore) unsubFirestore();
+    if (pollInterval) clearInterval(pollInterval);
+    ch?.removeEventListener('message', handleBroadcast);
+    window.removeEventListener('storage', handleStorage);
   };
 }
 

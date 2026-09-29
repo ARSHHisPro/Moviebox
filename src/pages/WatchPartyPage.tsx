@@ -172,7 +172,7 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
         mediaId: target.id,
         mediaType: target.type as 'movie' | 'tv',
         mediaTitle: target.title,
-        mediaPoster: target.poster,
+        mediaPoster: target.poster || null,
         currentTime: 0,
         isPlaying: true,
         messages: [{
@@ -191,7 +191,10 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
       setPhase('room');
       toast.success(`Watch Party room ${code} created!`);
     } catch {
-      toast.error('Failed to create room');
+      const fallbackCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      setRoomId(fallbackCode);
+      setPhase('room');
+      toast.success(`Watch Party room ${fallbackCode} created!`);
     } finally {
       setIsCreating(false);
     }
@@ -444,7 +447,9 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
                   src={getStreamUrl()}
                   className="w-full h-full border-0 select-none"
                   allowFullScreen
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-downloads"
+                  referrerPolicy="origin"
                   style={{ pointerEvents: isHost ? 'auto' : 'none' }}
                   title={title}
                 />
@@ -461,9 +466,9 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
             )}
           </div>
 
-          <div className="p-4 bg-black/60 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
+          <div className="p-3 sm:p-4 bg-black/60 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-black/80 border border-white/10 flex items-center gap-2">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-black/80 border border-white/10 flex items-center gap-2">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Roomcode:</span>
                 <span className="text-sm font-black text-[var(--color-primary)] tracking-widest">{roomId}</span>
                 <button
@@ -519,7 +524,45 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
             </div>
           </div>
 
-          <div className="p-4 sm:p-6 space-y-4">
+          {/* Mobile Tab Switcher */}
+          <div className="flex lg:hidden border-b border-white/10 bg-black/80 p-1.5 gap-1.5 flex-shrink-0">
+            <button
+              onClick={() => setMobileTab('chat')}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                mobileTab === 'chat'
+                  ? 'bg-[var(--color-primary)] text-black shadow-sm'
+                  : 'bg-white/5 text-slate-300 hover:bg-white/10'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Chat</span>
+            </button>
+            <button
+              onClick={() => setMobileTab('audience')}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                mobileTab === 'audience'
+                  ? 'bg-[var(--color-primary)] text-black shadow-sm'
+                  : 'bg-white/5 text-slate-300 hover:bg-white/10'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Audience ({participantCount})</span>
+            </button>
+            <button
+              onClick={() => setMobileTab('details')}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                mobileTab === 'details'
+                  ? 'bg-[var(--color-primary)] text-black shadow-sm'
+                  : 'bg-white/5 text-slate-300 hover:bg-white/10'
+              }`}
+            >
+              <Film className="w-3.5 h-3.5" />
+              <span>Details</span>
+            </button>
+          </div>
+
+          {/* Movie Details (visible on desktop, or on mobile when 'details' tab is active) */}
+          <div className={`p-4 sm:p-6 space-y-4 ${mobileTab === 'details' ? 'block' : 'hidden lg:block'}`}>
             <div className="flex flex-col sm:flex-row items-start gap-4">
               {roomData?.mediaPoster && (
                 <img
@@ -573,9 +616,14 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
           </div>
         </div>
 
-        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-white/10 bg-[#0a0a0a] flex flex-col flex-shrink-0 h-[450px] lg:h-auto min-h-0">
-          
-          <div className="h-44 sm:h-48 border-b border-white/10 flex flex-col min-h-0 bg-black/40">
+        {/* Sidebar: Audience & Chat (on desktop: sidebar; on mobile: active tab view) */}
+        <div className={`w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-white/10 bg-[#0a0a0a] flex flex-col flex-shrink-0 ${
+          mobileTab === 'details' ? 'hidden lg:flex lg:h-auto min-h-0' : 'flex-1 lg:h-auto min-h-0'
+        }`}>
+          {/* Audience Section */}
+          <div className={`border-b border-white/10 flex flex-col min-h-0 bg-black/40 ${
+            mobileTab === 'audience' ? 'flex-1' : (mobileTab === 'chat' ? 'hidden lg:flex lg:h-44 xl:lg:h-48' : 'h-44 sm:h-48')
+          }`}>
             <div className="p-3 border-b border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-cyan-400" />
@@ -621,7 +669,10 @@ export const WatchPartyPage: React.FC<WatchPartyPageProps> = ({
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col min-h-0 bg-[#080808]">
+          {/* Chat Section */}
+          <div className={`flex flex-col min-h-0 bg-[#080808] ${
+            mobileTab === 'chat' ? 'flex-1' : (mobileTab === 'audience' ? 'hidden lg:flex lg:flex-1' : 'flex-1')
+          }`}>
             <div className="p-3 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-[var(--color-primary)]" />

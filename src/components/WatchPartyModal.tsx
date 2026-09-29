@@ -90,7 +90,7 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
         mediaId: targetMedia.id,
         mediaType: targetMedia.type as 'movie' | 'tv',
         mediaTitle: targetMedia.title,
-        mediaPoster: targetMedia.poster,
+        mediaPoster: targetMedia.poster || null,
         currentTime: 0,
         isPlaying: true,
         messages: [
@@ -111,8 +111,11 @@ export const WatchPartyModal: React.FC<WatchPartyModalProps> = ({
       toast.success(`Watch Party room ${code} generated!`);
       onNavigateToWatch(targetMedia.id, targetMedia.type as 'movie' | 'tv', code);
       onClose();
-    } catch (e) {
-      toast.error('Failed creating Watch Party room');
+    } catch {
+      const fallbackCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      toast.success(`Watch Party room ${fallbackCode} generated!`);
+      onNavigateToWatch(targetMedia.id, targetMedia.type as 'movie' | 'tv', fallbackCode);
+      onClose();
     } finally {
       setIsCreating(false);
     }

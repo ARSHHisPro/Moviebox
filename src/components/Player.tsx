@@ -501,13 +501,14 @@ export const Player: React.FC<PlayerProps> = ({
           className="w-full h-full border-0"
           allowFullScreen
           allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-downloads"
           referrerPolicy="origin"
           title={`Streaming ${title}`}
         />
       </div>
 
       {showEpisodeDrawer && type === 'tv' && (
-        <div className="absolute right-0 top-0 bottom-0 w-80 bg-slate-950/95 backdrop-blur-2xl border-l border-white/10 z-40 p-4 flex flex-col animate-in slide-in-from-right duration-200">
+        <div className="absolute right-0 top-0 bottom-0 w-full sm:w-80 bg-slate-950/95 backdrop-blur-2xl border-l border-white/10 z-40 p-4 flex flex-col animate-in slide-in-from-right duration-200">
           <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
             <h3 className="font-bold text-white text-sm">Episodes</h3>
             <button

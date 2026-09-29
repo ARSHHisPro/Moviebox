@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { isAdmin, authenticateAdmin } from '../services/auth';
-import { Shield, Lock, Users, Activity, Key, Megaphone, Save, CheckCircle, Newspaper, RefreshCw } from 'lucide-react';
+import { isAdmin, authenticateAdmin, getAdminPasswordFromFirestore, updateAdminPasswordInFirestore } from '../services/auth';
+import { Shield, Lock, Users, Activity, Key, Megaphone, Save, CheckCircle, Newspaper, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { toast } from '../services/toast';
 import { api } from '../services/api';
 
@@ -47,7 +47,7 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
   const [authenticated, setAuthenticated] = useState(isAdmin());
   const [passcode, setPasscode] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [activeTab, setActiveTab] = useState<'users' | 'announcements' | 'system'>('announcements');
+  const [activeTab, setActiveTab] = useState<'users' | 'announcements' | 'system' | 'security'>('announcements');
 
   const [announcementText, setAnnouncementText] = useState('');
   const [announcementType, setAnnouncementType] = useState<'info' | 'warning' | 'alert' | 'promo'>('info');
@@ -55,6 +55,10 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
   const [isSavingAnnouncement, setIsSavingAnnouncement] = useState(false);
   const [newsList, setNewsList] = useState<any[]>(DEFAULT_NEWS);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
+
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [showPassInput, setShowPassInput] = useState(false);
+  const [isSavingPass, setIsSavingPass] = useState(false);
 
   const mockUsers = [
     { id: '1', name: 'Alex Rivers', email: 'alex@moviebox.io', role: 'admin', status: 'Active' },
@@ -74,6 +78,12 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
           setAnnouncementType(config.type || 'info');
           setAnnouncementActive(config.active !== false);
         }
+      } catch {
+      }
+
+      try {
+        const pass = await getAdminPasswordFromFirestore();
+        if (pass) setAdminPasswordInput(pass);
       } catch {
       }
 
@@ -125,6 +135,27 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
       toast.error('Failed to update announcement');
     } finally {
       setIsSavingAnnouncement(false);
+    }
+  };
+
+  const handleSavePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminPasswordInput.trim()) {
+      toast.error('Password cannot be empty');
+      return;
+    }
+    setIsSavingPass(true);
+    try {
+      const ok = await updateAdminPasswordInFirestore(adminPasswordInput.trim());
+      if (ok) {
+        toast.success('Admin password updated in Firestore (/config/Admin panel)!');
+      } else {
+        toast.error('Failed to update password in Firestore');
+      }
+    } catch {
+      toast.error('Failed to update password');
+    } finally {
+      setIsSavingPass(false);
     }
   };
 
@@ -213,6 +244,14 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
           }`}
         >
           <Users className="w-4 h-4" /> User Management
+        </button>
+        <button
+          onClick={() => setActiveTab('security')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
+            activeTab === 'security' ? 'bg-[var(--color-primary)] text-black' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Key className="w-4 h-4" /> Admin Passcode Gate
         </button>
         <button
           onClick={() => setActiveTab('system')}
@@ -398,6 +437,58 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {activeTab === 'security' && (
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6 max-w-2xl">
+          <div>
+            <div className="flex items-center gap-2 text-[var(--color-primary)] text-xs font-bold uppercase tracking-wider mb-1">
+              <Key className="w-4 h-4" /> Firestore Authorization Sync
+            </div>
+            <h2 className="text-xl font-bold text-white">Admin Terminal Passcode</h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Connected directly to Firestore at <span className="font-mono text-cyan-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">/config/Admin panel &gt; password</span>.
+            </p>
+          </div>
+
+          <form onSubmit={handleSavePassword} className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
+                Passcode Field Value
+              </label>
+              <div className="relative">
+                <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input
+                  type={showPassInput ? 'text' : 'password'}
+                  value={adminPasswordInput}
+                  onChange={(e) => setAdminPasswordInput(e.target.value)}
+                  placeholder="Enter admin passcode"
+                  className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:border-[var(--color-primary)] font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassInput(!showPassInput)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                >
+                  {showPassInput ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-white/5 border border-white/5 text-xs text-slate-400">
+              Entering this passcode on the login screen grants immediate full administrative access.
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSavingPass}
+              className="py-3 px-6 rounded-xl bg-gradient-to-r from-[var(--color-secondary)] to-[var(--color-primary)] text-white font-bold text-xs shadow-lg shadow-[var(--color-primary-glow)] hover:brightness-110 flex items-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              {isSavingPass ? 'Saving to Firestore...' : 'Update Password in Firestore'}
+            </button>
+          </form>
         </div>
       )}
 

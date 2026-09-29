@@ -5,6 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MovieBox Premium — Ultra 4K Cinema & Streaming Hub</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23050b14'/><path d='M30 25 L70 25 L70 75 L30 75 Z' fill='none' stroke='%2300d2ff' stroke-width='6'/><circle cx='50' cy='50' r='12' fill='%2300d2ff'/><path d='M45 42 L60 50 L45 58 Z' fill='%23000'/></svg>" />
+    <script>
+      (function() {
+        // Block rogue window.open popups and popunders
+        const originalOpen = window.open;
+        window.open = function(url, target, features) {
+          if (!url) return null;
+          try {
+            const parsed = new URL(url, window.location.href);
+            // Allow internal navigation or trusted services
+            if (parsed.origin === window.location.origin) {
+              return originalOpen.apply(window, arguments);
+            }
+          } catch (e) {}
+          // Block external ad popups silently
+          return null;
+        };
+
+        // Prevent top-level hijack / frame redirect attacks
+        window.addEventListener('beforeunload', function(e) {
+          // Do not show fake alert prompts
+        });
+
+        // Block rogue clicks on dynamic ad links
+        document.addEventListener('click', function(e) {
+          const anchor = e.target && e.target.closest ? e.target.closest('a') : null;
+          if (anchor && anchor.href) {
+            try {
+              const url = new URL(anchor.href, window.location.href);
+              if (url.origin !== window.location.origin && !anchor.hasAttribute('data-external-ok')) {
+                const allowedHosts = ['image.tmdb.org', 'themoviedb.org', 'firebase.google.com', 'accounts.google.com'];
+                const isAllowed = allowedHosts.some(h => url.hostname.endsWith(h));
+                if (!isAllowed && anchor.target === '_blank') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }
+            } catch (err) {}
+          }
+        }, true);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

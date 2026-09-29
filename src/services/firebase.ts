@@ -8,6 +8,7 @@ import {
   signOut as firebaseSignOut, 
   onAuthStateChanged, 
   updateProfile,
+  signInAnonymously,
   User as FirebaseUser 
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -34,6 +35,7 @@ export {
   createUserWithEmailAndPassword, 
   firebaseSignOut, 
   onAuthStateChanged, 
-  updateProfile 
+  updateProfile,
+  signInAnonymously
 };
 export type { FirebaseUser };
